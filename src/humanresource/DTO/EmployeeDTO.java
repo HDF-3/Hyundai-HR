@@ -4,12 +4,14 @@ package humanresource.DTO;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.time.LocalDate;
 
 @NoArgsConstructor
 @Getter
 @Setter
+@ToString
 public class EmployeeDTO {
     private Long empId;
     private Long deptId;
