@@ -55,3 +55,6 @@ logs/
 
 ### Maven ###
 target/
+
+## properties ##
+src/resources/db.properties

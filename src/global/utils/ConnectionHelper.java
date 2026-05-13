@@ -1,9 +1,22 @@
 package global.utils;
 import global.types.DBType;
 
+import java.io.InputStream;
 import java.sql.*;
+import java.util.Properties;
 
 public class ConnectionHelper {
+
+    private static final Properties props = new Properties();
+
+    static {
+        try {
+            InputStream input = ConnectionHelper.class.getClassLoader().getResourceAsStream("db.properties");
+            props.load(input);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     public static Connection getConnection(DBType dbtype) {
 
@@ -12,10 +25,18 @@ public class ConnectionHelper {
         try {
             switch (dbtype) {
                 case ORACLE:
-                    conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521/FREEPDB1", "do", "1234");
+                    conn = DriverManager.getConnection(
+                            props.getProperty("oracle.url"),
+                            props.getProperty("oracle.user"),
+                            props.getProperty("oracle.password")
+                    );
                     break;
                 case POSTGRES:
-                    conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521/sampledb", "do", "1234");
+                    conn = DriverManager.getConnection(
+                            props.getProperty("postgres.url"),
+                            props.getProperty("postgres.user"),
+                            props.getProperty("postgres.password")
+                    );
                     break;
             }
         } catch (Exception e) {
@@ -32,13 +53,10 @@ public class ConnectionHelper {
         try {
             switch (dbtype) {
                 case ORACLE:
-                    conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521/FREEPDB1", id, pwd);
-                    break;
-                case POSTGRES:
-                    conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521/sampledb", id, pwd);
+                    conn = DriverManager.getConnection(props.getProperty("oracle.url"), id, pwd);
                     break;
                 case MARIADB:
-                    conn = DriverManager.getConnection("jdbc:mariadb://localhost:3306/SampleDB", id, pwd);
+                    conn = DriverManager.getConnection(props.getProperty("mariadb.url"), id, pwd);
             }
         } catch (Exception e) {
             e.printStackTrace();
