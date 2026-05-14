@@ -23,15 +23,15 @@ public class SalaryStandardDAO {
         return salaryStandard;
     }
 
-    public BigDecimal findSalaryStandard(Long positionId, Integer payGrade) {
+    public SalaryStandardDTO findSalaryStandard(Long positionId, Integer payGrade) {
         Connection conn = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
-        BigDecimal baseSalary = null;
+        SalaryStandardDTO salaryStandard = null;
 
         try {
             conn = ConnectionHelper.getConnection(DBType.ORACLE);
-            String sql = "select base_salary from salary_standard where position_id=? and pay_grade=?";
+            String sql = "select salary_standard_id, position_id, pay_grade, base_salary, regular_hourly_rate from salary_standard where position_id=? and pay_grade=?";
 
             pstmt = conn.prepareStatement(sql);
             pstmt.setLong(1, positionId);
@@ -39,7 +39,13 @@ public class SalaryStandardDAO {
             rs = pstmt.executeQuery();
 
             if (rs.next()) {
-                baseSalary = rs.getBigDecimal("base_salary");
+                salaryStandard = new SalaryStandardDTO();
+
+                salaryStandard.setSalaryStandardId(rs.getLong("salary_standard_id"));
+                salaryStandard.setPositionId(rs.getLong("position_id"));
+                salaryStandard.setPayGrade(rs.getInt("pay_grade"));
+                salaryStandard.setBaseSalary(rs.getBigDecimal("base_salary"));
+                salaryStandard.setRegularHourlyRate(rs.getBigDecimal("regular_hourly_rate"));
             }
 
         } catch (Exception e) {
@@ -50,7 +56,7 @@ public class SalaryStandardDAO {
             ConnectionHelper.close(conn);
         }
 
-        return baseSalary;
+        return salaryStandard;
     }
 
     public int insertSalaryStandard(SalaryStandardDTO salaryStandard) {
