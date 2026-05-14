@@ -9,7 +9,7 @@ public class MonthlyPayrollBatch {
     private final PayrollService payrollService = new PayrollService();
 
     public void run() {
-        payrollService.createMonthlyPayroll(getTargetMonth(););
+        payrollService.createMonthlyPayroll(getTargetMonth());
     }
 
     private YearMonth getTargetMonth() {
