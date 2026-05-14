@@ -40,7 +40,7 @@ public class EarningGenerator {
         earning.setBaseSalary(salaryStandard.getBaseSalary());
         earning.setOvertimePay(calculateOvertimePay(salaryStandard.getRegularHourlyRate(), overtime.getOvertimeHours()));
         earning.setTransportationAllowance(calculateTransportationAllowance(overtime.getOvertimeDays()));
-        // earning.setPerformanceBonus(BigDecimal.ZERO);
+        earning.setPerformanceBonus(BigDecimal.ZERO);
         earning.setAdditionalAllowance(calculateAdditionalAllowance(employee.getEmpId(), yearMonth));
 
         return earning;
