@@ -20,17 +20,15 @@ public class PerformanceEvaluationDAO {
 
         try {
             conn = ConnectionHelper.getConnection(DBType.ORACLE);
-            String sql = "INSERT INTO PERFORMANCE_EVALUATION(EVALUATION_ID, TARGET_EMP_ID, EVAL_YEAR, EVAL_QUARTER, GRADE) VALUES (?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO PERFORMANCE_EVALUATION(TARGET_EMP_ID, EVAL_YEAR, EVAL_QUARTER, GRADE) VALUES (?, ?, ?, ?)";
 
             pstmt = conn.prepareStatement(sql);
-            pstmt.setLong(1, dto.getEvaluationId());
-            pstmt.setLong(2, dto.getTargetEmpId());
-            pstmt.setString(3, dto.getEvaluationYear()); // DB는 NUMBER(4)지만 String 바인딩 자동 변환됨
-            pstmt.setInt(4, dto.getEvaluationQuarter());
-            pstmt.setString(5, dto.getPerformanceGrade().name());
+            pstmt.setLong(1, dto.getTargetEmpId());
+            pstmt.setString(2, dto.getEvaluationYear());
+            pstmt.setInt(3, dto.getEvaluationQuarter());
+            pstmt.setString(4, dto.getPerformanceGrade().name()); // Enum 이름을 문자열로 저장
 
             rowcount = pstmt.executeUpdate();
-
         } catch (Exception e) {
             System.out.println("Insert Error: " + e.getMessage());
         } finally {
