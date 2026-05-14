@@ -73,7 +73,7 @@ public class AttendanceService {
 		else return false;
 	}
 	
-//	public OvertimeDTO getOvertimeAmount(Long empId, YearMonth ym) {
-//		attendanceDAO.findOvertimeAmount(empId, ym.getYear(), ym.getMonthValue());
-//	}
+	public OvertimeDTO getOvertimeAmount(Long empId, YearMonth ym) {
+		return attendanceDAO.findOvertimeAmount(empId, ym);
+	}
 }

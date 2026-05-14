@@ -401,7 +401,64 @@ public class AttendanceDAO {
 	}
 	
 	//급여부분 연계
-//	public OvertimeDTO findOvertimeAmount(Long empId, int yyyy, int month) {
-//		
-//	}
+	public OvertimeDTO findOvertimeAmount(Long empId, YearMonth ym) {		
+		Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		OvertimeDTO overtimeInfo = new OvertimeDTO();
+		
+		String sql = "SELECT\n"
+				+ "    NVL(SUM(overtime_minutes), 0) AS total_overtime_minutes,\n"
+				+ "    COUNT(*) AS overtime_days\n"
+				+ "FROM (\n"
+				+ "    SELECT\n"
+				+ "        a.emp_id,\n"
+				+ "        a.work_date,\n"
+				+ "        (\n"
+				+ "            TO_NUMBER(TO_CHAR(a.off_work_time, 'HH24')) * 60\n"
+				+ "          + TO_NUMBER(TO_CHAR(a.off_work_time, 'MI'))\n"
+				+ "        )\n"
+				+ "        -\n"
+				+ "        (\n"
+				+ "            TO_NUMBER(SUBSTR(w.off_work_time, 1, 2)) * 60\n"
+				+ "          + TO_NUMBER(SUBSTR(w.off_work_time, 4, 2))\n"
+				+ "        ) AS overtime_minutes\n"
+				+ "    FROM attendance a\n"
+				+ "    JOIN work_time w\n"
+				+ "      ON w.emp_id = a.emp_id\n"
+				+ "     AND w.applied_date = (\n"
+				+ "            SELECT MIN(w2.applied_date)\n"
+				+ "            FROM work_time w2\n"
+				+ "            WHERE w2.emp_id = a.emp_id\n"
+				+ "              AND w2.applied_date >= a.work_date\n"
+				+ "        )\n"
+				+ "    WHERE a.emp_id = ?\n"
+				+ "      AND a.work_date >= ?\n"
+				+ "      AND a.work_date < ?\n"
+				+ "      AND a.off_work_time IS NOT NULL\n"
+				+ ")\n"
+				+ "WHERE overtime_minutes > 0";
+		try {
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setLong(1, empId);
+			pstmt.setDate(2, Date.valueOf(ym.atDay(1)));
+			pstmt.setDate(3, Date.valueOf(ym.plusMonths(1).atDay(1)));
+			rs = pstmt.executeQuery();
+			
+			if(rs.next()) {
+				do {
+					overtimeInfo.setOvertimeHours(rs.getFloat("total_overtime_minutes")/60);
+					overtimeInfo.setOvertimeDays(rs.getInt("overtime_days"));
+				}while(rs.next());
+			}
+			return overtimeInfo;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}finally {
+			ConnectionHelper.close(rs);
+			ConnectionHelper.close(pstmt);
+			ConnectionHelper.close(conn);
+		}
+	}
 }
