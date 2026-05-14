@@ -29,7 +29,7 @@ public class EmployeeDAO {
 
         try {
             conn = ConnectionHelper.getConnection(DBType.ORACLE);
-            String sql = "INSERT INTO EMPLOYEE(EMP_ID, DEPT_ID, POSITION_ID, ENAME) values(?,?, ?, ?)";
+            String sql = "INSERT INTO EMPLOYEE(EMP_ID, DEPT_ID, POSITION_ID, NAME, STATUS_ID, HIRE_DATE, PASSWORD) values(?, ?, ?, ?, ?, ?, ?)";
 
             pstmt = conn.prepareStatement(sql);
 
@@ -37,6 +37,25 @@ public class EmployeeDAO {
             pstmt.setLong(2, employeeDTO.getDeptId());
             pstmt.setLong(3, employeeDTO.getPositionId());
             pstmt.setString(4, employeeDTO.getEname());
+            
+            if (employeeDTO.getStatusId() != null) {
+                pstmt.setInt(5, employeeDTO.getStatusId().getCode());
+            } else {
+                pstmt.setInt(5, EmploymentStatus.ACTIVE.getCode());
+            }
+
+            if (employeeDTO.getHireDate() != null) {
+                pstmt.setDate(6, java.sql.Date.valueOf(employeeDTO.getHireDate()));
+            } else {
+                pstmt.setDate(6, java.sql.Date.valueOf(java.time.LocalDate.now()));
+            }
+
+            // 비밀번호 설정 (초기 비밀번호는'1234')
+            if (employeeDTO.getPassword() != null) {
+                pstmt.setString(7, employeeDTO.getPassword());
+            } else {
+                pstmt.setString(7, "1234"); 
+            }
 
             rowcount = pstmt.executeUpdate();
 
@@ -56,9 +75,8 @@ public class EmployeeDAO {
 
         try {
             conn = ConnectionHelper.getConnection(DBType.ORACLE);
-            // 사번을 제외하고 변경 가능한 모든 항목을 업데이트 (입사일, 성별 등 절대 안 바뀌는 건 빼도 됨)
             String sql = "UPDATE EMPLOYEE SET DEPT_ID=?, POSITION_ID=?, STATUS_ID=?, NAME=?, " +
-                    "CONTACT=?, EMAIL=?, ADDRESS=?, SALARY_ACCOUNT=?, PAY_GRADE=?, PASSWORD=? " +
+                    "CONTACT=?, EMAIL=?, ADDRESS=?, SALARY_ACCOUNT=?, PAY_GRADE=?, PASSWORD=?, RESIGN_DATE=? " +
                     "WHERE EMP_ID=?";
 
             pstmt = conn.prepareStatement(sql);
@@ -78,8 +96,14 @@ public class EmployeeDAO {
             pstmt.setInt(9, employeeDTO.getPayGrade());
             pstmt.setString(10, employeeDTO.getPassword());
             
+            if (employeeDTO.getResignDate() != null) {
+                pstmt.setDate(11, java.sql.Date.valueOf(employeeDTO.getResignDate()));
+            } else {
+                pstmt.setNull(11, java.sql.Types.DATE);
+            }
+            
             // WHERE 조건에 들어갈 사번
-            pstmt.setLong(11, employeeDTO.getEmpId()); 
+            pstmt.setLong(12, employeeDTO.getEmpId());
 
             rowcount = pstmt.executeUpdate();
 
@@ -113,7 +137,6 @@ public class EmployeeDAO {
                 emp.setDeptId(rs.getLong("DEPT_ID"));
                 emp.setPositionId(rs.getLong("POSITION_ID"));
 
-                // 💡 [수정 포인트] 여기서부터 데이터 꽉꽉 채워넣기!
                 int statusCode = rs.getInt("STATUS_ID");
                 emp.setStatusId(EmploymentStatus.fromCode(statusCode));
                 emp.setEname(rs.getString("NAME"));

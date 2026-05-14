@@ -1,6 +1,5 @@
 package humanresource.DTO;
 
-
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -12,10 +11,8 @@ import lombok.ToString;
 @ToString
 public class PerformanceEvaluationDTO {
     private Long evaluationId;
+    private Long targetEmpId;
     private String evaluationYear;
     private int evaluationQuarter;
-    private String comment;
     private global.types.PerformanceGrade performanceGrade;
-    private Long targetEmpId;
-    private Long evaluatorEmpId;
 }
