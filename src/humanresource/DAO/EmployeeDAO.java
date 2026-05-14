@@ -96,14 +96,11 @@ public class EmployeeDAO {
             pstmt.setString(8, employeeDTO.getSalAccount());
             pstmt.setInt(9, employeeDTO.getPayGrade());
             pstmt.setString(10, employeeDTO.getPassword());
-            
             if (employeeDTO.getResignDate() != null) {
                 pstmt.setDate(11, java.sql.Date.valueOf(employeeDTO.getResignDate()));
             } else {
                 pstmt.setNull(11, java.sql.Types.DATE);
             }
-            
-            // WHERE 조건에 들어갈 사번
             pstmt.setLong(12, employeeDTO.getEmpId());
 
             rowcount = pstmt.executeUpdate();
@@ -216,7 +213,7 @@ public class EmployeeDAO {
     }
 
 
-    // 1. 사원 상세 정보 조회 (EmployeeInfoDTO 반환)
+    // 사원 상세 정보 조회
     public EmployeeInfoDTO selectEmployeeInfoDetail(Long empId) {
         Connection conn = null;
         PreparedStatement pstmt = null;
@@ -225,8 +222,6 @@ public class EmployeeDAO {
 
         try {
             conn = ConnectionHelper.getConnection(DBType.ORACLE);
-
-            // JOIN을 통해 부서명과 직급명을 함께 조회
             String sql = "SELECT e.EMP_ID, e.NAME, d.DEPT_NAME, p.POSITION_NAME, " +
                     "e.PAY_GRADE, e.HIRE_DATE, e.GENDER, e.CONTACT, e.EMAIL, e.ADDRESS " +
                     "FROM EMPLOYEE e " +
@@ -264,7 +259,7 @@ public class EmployeeDAO {
         return info;
     }
 
-    // 2. 전체 사원 목록 조회 (EmployeeInfoDTO 리스트 반환)
+    // 전체 사원 목록 조회
     public List<EmployeeInfoDTO> selectAllEmployeeInfoList() {
         List<EmployeeInfoDTO> list = new ArrayList<>();
         Connection conn = null;
@@ -273,8 +268,6 @@ public class EmployeeDAO {
 
         try {
             conn = ConnectionHelper.getConnection(DBType.ORACLE);
-
-            // 전체 목록 출력용 JOIN 쿼리
             String sql = "SELECT e.EMP_ID, e.NAME, d.DEPT_NAME, p.POSITION_NAME, e.HIRE_DATE " +
                     "FROM EMPLOYEE e " +
                     "LEFT JOIN DEPARTMENT d ON e.DEPT_ID = d.DEPT_ID " +

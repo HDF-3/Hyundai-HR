@@ -7,14 +7,6 @@ import java.time.LocalDate;
 import java.util.List;
 
 public class EmployeeService {
-    //TODO
-    //+ registerEmployee(EmployeeDTO) : Boolean
-    //+ getEmployeeInfo(Long empId): EmployeeDTO
-    //+ modifyEmployeeInfo(EmployeeDTO): Boolean
-    //+ processResignation(String empId) : Boolean
-    //+ promoteEmployee(Long empId, Long newPositionId) : Boolean
-    //+ promoteEmployeePaygrade(Long empId, Long newPositionId) : Boolean
-    //+ transferDepartment(Long empId, int newDeptId) : Boolean
 
 
     private final humanresource.DAO.EmployeeDAO employeeDAO;
@@ -41,7 +33,7 @@ public class EmployeeService {
 
     public boolean registerResignationDate(Long empId, LocalDate expectedResignDate){
         EmployeeDTO emp = employeeDAO.selectEmployeeById(empId);
-        if (emp == null) return false; // 사원이 없으면 실패
+        if (emp == null) return false;
 
 
         emp.setResignDate(expectedResignDate);
@@ -50,7 +42,7 @@ public class EmployeeService {
     }
     public boolean promoteEmployee(Long empId, Long positionId){
         EmployeeDTO emp = employeeDAO.selectEmployeeById(empId);
-        if (emp == null) return false; // 사원이 없으면 실패
+        if (emp == null) return false;
 
         emp.setPositionId(positionId);
 
