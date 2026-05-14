@@ -14,4 +14,8 @@ public class AttendanceService {
 	public int registerWorkTime(RequestWorkTimeDTO reqTime) {
 		return attendanceDAO.insertWorkTime(reqTime);
 	}
+	
+	public int registerToday(Long empId) {
+		return attendanceDAO.mergeToday(empId);
+	}
 }

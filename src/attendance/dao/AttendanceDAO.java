@@ -36,4 +36,53 @@ public class AttendanceDAO {
 			ConnectionHelper.close(conn);
 		}
 	}
+	
+	public int mergeToday(Long empId) {
+		Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
+		PreparedStatement pstmt = null;
+		int result =-1;
+		
+		String sql = "MERGE INTO ATTENDANCE a "
+		        + "USING ( "
+		        + "    SELECT ? AS emp_id, "
+		        + "           TRUNC(SYSDATE) AS work_date, "
+		        + "           CAST(SYSTIMESTAMP AS TIMESTAMP) AS now_time "
+		        + "    FROM dual "
+		        + ") src "
+		        + "ON ( "
+		        + "    a.emp_id = src.emp_id "
+		        + "    AND a.work_date = src.work_date "
+		        + ") "
+		        + "WHEN MATCHED THEN "
+		        + "    UPDATE SET "
+		        + "        a.off_work_time = src.now_time "
+		        + "    WHERE a.off_work_time IS NULL "
+		        + "WHEN NOT MATCHED THEN "
+		        + "    INSERT ( "
+		        + "        emp_id, "
+		        + "        work_date, "
+		        + "        on_work_time, "
+		        + "        is_closed "
+		        + "    ) "
+		        + "    VALUES ( "
+		        + "        src.emp_id, "
+		        + "        src.work_date, "
+		        + "        src.now_time, "
+		        + "        'N' "
+		        + "    )";
+		
+		try {
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setLong(1, empId);
+			result = pstmt.executeUpdate();
+
+			return result;	
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return result;
+		}finally {
+			ConnectionHelper.close(pstmt);
+			ConnectionHelper.close(conn);
+		}
+	}
 }
