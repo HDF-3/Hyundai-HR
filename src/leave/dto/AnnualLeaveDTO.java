@@ -16,6 +16,6 @@ public class AnnualLeaveDTO {
     private LocalDate expiredAt;
     private double grantedAnnualLeave;
     private double usedAnnualLeave;
+    private char isActive;
     private double remainingAnnualLeave;
-
 }
