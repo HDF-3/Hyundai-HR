@@ -1,5 +1,6 @@
 package attendance.service;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
@@ -41,7 +42,24 @@ public class AttendanceService {
 		return attendanceDAO.findNormalAttenDances(sDate, eDate);
 	}
 	
+	//본인 유연근무시간 등록
 	public int registerWorkTime(RequestWorkTimeDTO reqTime) {
+		long minutes = Duration.between(
+			    reqTime.getOnWorkTime(),
+			    reqTime.getOffWorkTime()
+			).toMinutes();
+		if(reqTime.getOffWorkTime().compareTo(reqTime.getOnWorkTime())<0 ) {
+			System.out.println("퇴근시간이 출근시간보다 앞설 수 없습니다");
+			return -1;
+		}else if(minutes < 9 * 60) {
+			System.out.println("근무시간 최소는 8시간입니다(휴게시간 1시간 제외)");
+			return -1;
+		}else if(YearMonth.now().isAfter(reqTime.getAppliedMonth())
+				||YearMonth.now().equals(reqTime.getAppliedMonth())) {
+			System.out.println("유연근무 신청은 다음달 이후로 신청할 수 있습니다");
+			return -1;
+		}
+		
 		return attendanceDAO.insertWorkTime(reqTime);
 	}
 	

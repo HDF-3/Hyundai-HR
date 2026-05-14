@@ -285,19 +285,37 @@ public class AttendanceDAO {
 		PreparedStatement pstmt = null;
 		int result =-1;
 		
-		String sql = "INSERT INTO work_time (emp_id, applied_date, on_work_time, off_work_time) values(?,?,?,?)";
-		
+		String sql = 	"UPDATE work_time "
+				+ 		"SET applied_date = LAST_DAY(ADD_MONTHS(?, -1)) "
+				+ 		"WHERE emp_id = ? "
+				+ 		"AND applied_date = DATE '9999-12-31'";
+		String sql2 = 	"INSERT INTO work_time (emp_id, applied_date, on_work_time, off_work_time) "
+				+ 		"values(?,?,?,?)";
+
+
 		try {
+			conn.setAutoCommit(false); //트랜잭션 위함
 			pstmt = conn.prepareStatement(sql);
+			pstmt.setDate(1, java.sql.Date.valueOf(reqTime.getAppliedMonth().atDay(1)));
+			pstmt.setLong(2, reqTime.getEmpId());
+			result = pstmt.executeUpdate();
+			
+			pstmt = conn.prepareStatement(sql2);
 			pstmt.setLong(1, reqTime.getEmpId());
-			pstmt.setDate(2, Date.valueOf(reqTime.getAppliedDate()));
+			pstmt.setDate(2,  Date.valueOf("9999-12-31"));
 			pstmt.setString(3, reqTime.getOnWorkTime().toString());
 			pstmt.setString(4, reqTime.getOffWorkTime().toString());
 			result = pstmt.executeUpdate();
 			
+			conn.commit();
 			return result;	
 		} catch (SQLException e) {
 			e.printStackTrace();
+			try {
+				conn.rollback();
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
 			return result;
 		}finally {
 			ConnectionHelper.close(pstmt);
