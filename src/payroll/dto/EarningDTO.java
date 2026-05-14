@@ -13,8 +13,8 @@ public class EarningDTO {
     private Long earningId;
     private Long payrollId;
     private BigDecimal baseSalary;
-    private BigDecimal bonus;
     private BigDecimal overtimePay;
     private BigDecimal transportationAllowance;
-    private BigDecimal departmentAllowance;
+    private BigDecimal performanceBonus;
+    private BigDecimal additionalAllowance;
 }
