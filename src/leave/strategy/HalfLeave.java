@@ -11,6 +11,6 @@ public class HalfLeave implements Leave {
 
     @Override
     public boolean requiresApproval() {
-        return false;
+        return true;
     }
 }
