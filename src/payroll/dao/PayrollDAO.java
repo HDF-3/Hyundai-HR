@@ -19,7 +19,7 @@ public class PayrollDAO {
         PayrollDTO payroll = new PayrollDTO();
 
         payroll.setPayrollId(rs.getLong("payroll_id"));
-        payroll.setEmployeeId(rs.getInt("employee_id"));
+        payroll.setEmployeeId(rs.getLong("employee_id"));
         payroll.setPayrollYearMonth(YearMonth.from(rs.getDate("payroll_year_month").toLocalDate()));
         payroll.setTotalEarnings(rs.getBigDecimal("total_earnings"));
         payroll.setTotalDeductions(rs.getBigDecimal("total_deductions"));
@@ -131,7 +131,7 @@ public class PayrollDAO {
             pstmt = conn.prepareStatement(sql);
 
             pstmt.setLong(1, payroll.getPayrollId());
-            pstmt.setInt(2, payroll.getEmployeeId());
+            pstmt.setLong(2, payroll.getEmployeeId());
             pstmt.setDate(3, Date.valueOf(payroll.getPayrollYearMonth().atDay(1)));
             pstmt.setBigDecimal(4, payroll.getTotalEarnings());
             pstmt.setBigDecimal(5, payroll.getTotalDeductions());
@@ -163,7 +163,7 @@ public class PayrollDAO {
 
             pstmt = conn.prepareStatement(sql);
 
-            pstmt.setInt(1, payroll.getEmployeeId());
+            pstmt.setLong(1, payroll.getEmployeeId());
             pstmt.setDate(2, Date.valueOf(payroll.getPayrollYearMonth().atDay(1)));
             pstmt.setBigDecimal(3, payroll.getTotalEarnings());
             pstmt.setBigDecimal(4, payroll.getTotalDeductions());

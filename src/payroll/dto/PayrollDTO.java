@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class PayrollDTO {
 	private Long payrollId;
-	private Integer employeeId;
+	private Long employeeId;
 	private YearMonth payrollYearMonth;
 	private BigDecimal totalEarnings;
 	private BigDecimal totalDeductions;
