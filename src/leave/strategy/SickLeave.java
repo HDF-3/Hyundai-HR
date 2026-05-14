@@ -2,7 +2,7 @@ package leave.strategy;
 
 import java.time.LocalDate;
 
-public class SickLeave implements Leave {
+public class SickLeave implements LeavePolicy {
 
     @Override
     public double calculateDeduction(LocalDate start, LocalDate end) {

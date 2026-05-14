@@ -3,7 +3,7 @@ package leave.strategy;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 
-public class AnnualLeave implements Leave {
+public class AnnualLeave implements LeavePolicy {
     @Override
     public double calculateDeduction(LocalDate start, LocalDate end) {
         // 주말 제외 로직. 공휴일은 추후 처리 예정
