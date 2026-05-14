@@ -1,17 +1,285 @@
 package attendance.dao;
 
 
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.sql.Date;
-import java.sql.Time;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
+import attendance.dto.MissingAttendanceDTO;
+import attendance.dto.NormalAttendanceDTO;
+import attendance.dto.OvertimeDTO;
 import attendance.dto.RequestWorkTimeDTO;
+import java.time.YearMonth;
 import global.types.DBType;
 import global.utils.ConnectionHelper;
 
 public class AttendanceDAO {
+
+	public List<NormalAttendanceDTO> findAllAttenDances(Long empId) {
+		Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		List<NormalAttendanceDTO> list = new ArrayList<>();
+		
+		String sql = "select * from attendance where emp_id = ?";
+		
+		try {
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setLong(1, empId);
+			rs = pstmt.executeQuery();
+			
+			if(rs.next()) {
+				do {
+					list.add(
+						    new NormalAttendanceDTO(
+						        rs.getLong("EMP_ID"),
+						        rs.getDate("WORK_DATE").toLocalDate(),
+						        rs.getTimestamp("ON_WORK_TIME") == null
+						            ? null
+						            : rs.getTimestamp("ON_WORK_TIME").toLocalDateTime().toLocalTime(),
+						        rs.getTimestamp("OFF_WORK_TIME") == null
+						            ? null
+						            : rs.getTimestamp("OFF_WORK_TIME").toLocalDateTime().toLocalTime(),
+						        rs.getString("IS_CLOSED")
+						    )
+						);
+				}while(rs.next());
+			}
+			return list;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}finally {
+			ConnectionHelper.close(rs);
+			ConnectionHelper.close(pstmt);
+			ConnectionHelper.close(conn);
+		}
+	}
+	public List<NormalAttendanceDTO> findAllAttenDances(LocalDate sDate, LocalDate eDate) {
+		Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		List<NormalAttendanceDTO> list = new ArrayList<>();
+		
+		String sql = "select * from attendance where WORK_DATE BETWEEN ? and ?";
+		
+		try {
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setDate(1,  java.sql.Date.valueOf(sDate));
+			pstmt.setDate(2, java.sql.Date.valueOf(eDate));
+			rs = pstmt.executeQuery();
+			
+			if(rs.next()) {
+				do {
+					list.add(
+						    new NormalAttendanceDTO(
+						        rs.getLong("EMP_ID"),
+						        rs.getDate("WORK_DATE").toLocalDate(),
+						        rs.getTimestamp("ON_WORK_TIME") == null
+						            ? null
+						            : rs.getTimestamp("ON_WORK_TIME").toLocalDateTime().toLocalTime(),
+						        rs.getTimestamp("OFF_WORK_TIME") == null
+						            ? null
+						            : rs.getTimestamp("OFF_WORK_TIME").toLocalDateTime().toLocalTime(),
+						        rs.getString("IS_CLOSED")
+						    )
+						);
+				}while(rs.next());
+			}
+			return list;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}finally {
+			ConnectionHelper.close(rs);
+			ConnectionHelper.close(pstmt);
+			ConnectionHelper.close(conn);
+		}
+	}
+	
+	public List<NormalAttendanceDTO> findNormalAttenDances(Long empId) {
+		Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		List<NormalAttendanceDTO> list = new ArrayList<>();
+		
+		String sql = "select * from attendance where emp_id = ?"
+				+ "AND on_work_time is not null "
+				+ "AND off_work_time is not null";
+		try {
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setLong(1, empId);
+			rs = pstmt.executeQuery();
+			
+			if(rs.next()) {
+				do {
+					list.add(
+						    new NormalAttendanceDTO(
+						        rs.getLong("EMP_ID"),
+						        rs.getDate("WORK_DATE").toLocalDate(),
+						        rs.getTimestamp("ON_WORK_TIME") == null
+						            ? null
+						            : rs.getTimestamp("ON_WORK_TIME").toLocalDateTime().toLocalTime(),
+						        rs.getTimestamp("OFF_WORK_TIME") == null
+						            ? null
+						            : rs.getTimestamp("OFF_WORK_TIME").toLocalDateTime().toLocalTime(),
+						        rs.getString("IS_CLOSED")
+						    )
+						);
+				}while(rs.next());
+			}
+			return list;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}finally {
+			ConnectionHelper.close(rs);
+			ConnectionHelper.close(pstmt);
+			ConnectionHelper.close(conn);
+		}
+	}
+	public List<NormalAttendanceDTO> findNormalAttenDances(LocalDate sDate, LocalDate eDate) {
+		Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		List<NormalAttendanceDTO> list = new ArrayList<>();
+		
+		String sql = "select * from attendance where WORK_DATE BETWEEN ? and ?"
+				+ "AND on_work_time is not null "
+				+ "AND off_work_time is not null";;
+		
+		try {
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setDate(1,  java.sql.Date.valueOf(sDate));
+			pstmt.setDate(2, java.sql.Date.valueOf(eDate));
+			rs = pstmt.executeQuery();
+			
+			if(rs.next()) {
+				do {
+					list.add(
+						    new NormalAttendanceDTO(
+						        rs.getLong("EMP_ID"),
+						        rs.getDate("WORK_DATE").toLocalDate(),
+						        rs.getTimestamp("ON_WORK_TIME") == null
+						            ? null
+						            : rs.getTimestamp("ON_WORK_TIME").toLocalDateTime().toLocalTime(),
+						        rs.getTimestamp("OFF_WORK_TIME") == null
+						            ? null
+						            : rs.getTimestamp("OFF_WORK_TIME").toLocalDateTime().toLocalTime(),
+						        rs.getString("IS_CLOSED")
+						    )
+						);
+				}while(rs.next());
+			}
+			return list;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}finally {
+			ConnectionHelper.close(rs);
+			ConnectionHelper.close(pstmt);
+			ConnectionHelper.close(conn);
+		}
+	}
+	
+	public List<MissingAttendanceDTO> findMissingAttenDances(Long empId) {
+		Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		List<MissingAttendanceDTO> list = new ArrayList<>();
+		
+		String sql = "select * from MISSING_PUNCH p "
+				+ "join MISSING_PUNCH_REASON r on p.missing_reason_id = r.missing_reason_id "
+				+ "join attendance a on p.emp_id = a.emp_id AND p.work_date = a.work_date "
+				+ "where p.emp_id = ?";
+		try {
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setLong(1, empId);
+			rs = pstmt.executeQuery();
+			
+			if(rs.next()) {
+				do {
+					list.add(
+						    new MissingAttendanceDTO(
+						        rs.getLong("EMP_ID"),
+						        rs.getDate("WORK_DATE").toLocalDate(),
+						        rs.getTimestamp("ON_WORK_TIME") == null
+						            ? null
+						            : rs.getTimestamp("ON_WORK_TIME").toLocalDateTime().toLocalTime(),
+						        rs.getTimestamp("OFF_WORK_TIME") == null
+						            ? null
+						            : rs.getTimestamp("OFF_WORK_TIME").toLocalDateTime().toLocalTime(),
+						        rs.getString("IS_CLOSED"),
+						        rs.getString("MISSING_TYPE"),
+						        rs.getString("MISSING_REASON")
+						    )
+						);
+				}while(rs.next());
+			}
+			return list;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}finally {
+			ConnectionHelper.close(rs);
+			ConnectionHelper.close(pstmt);
+			ConnectionHelper.close(conn);
+		}
+	}
+	public List<MissingAttendanceDTO> findMissingAttenDances(LocalDate sDate, LocalDate eDate) {
+		Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		List<MissingAttendanceDTO> list = new ArrayList<>();
+		
+		String sql = "select * from MISSING_PUNCH p "
+				+ "join MISSING_PUNCH_REASON r on p.missing_reason_id = r.missing_reason_id "
+				+ "join attendance a on p.emp_id = a.emp_id AND p.work_date = a.work_date "
+				+ "where a.on_work_time between ? and ? ";
+		
+		try {
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setDate(1,  java.sql.Date.valueOf(sDate));
+			pstmt.setDate(2, java.sql.Date.valueOf(eDate));
+			rs = pstmt.executeQuery();
+			
+			if(rs.next()) {
+				do {
+					list.add(
+						    new MissingAttendanceDTO(
+						        rs.getLong("EMP_ID"),
+						        rs.getDate("WORK_DATE").toLocalDate(),
+						        rs.getTimestamp("ON_WORK_TIME") == null
+						            ? null
+						            : rs.getTimestamp("ON_WORK_TIME").toLocalDateTime().toLocalTime(),
+						        rs.getTimestamp("OFF_WORK_TIME") == null
+						            ? null
+						            : rs.getTimestamp("OFF_WORK_TIME").toLocalDateTime().toLocalTime(),
+						        rs.getString("IS_CLOSED"),
+						        rs.getString("MISSING_TYPE"),
+						        rs.getString("MISSING_REASON")
+						    )
+						);
+				}while(rs.next());
+			}
+			return list;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}finally {
+			ConnectionHelper.close(rs);
+			ConnectionHelper.close(pstmt);
+			ConnectionHelper.close(conn);
+		}
+	}
+	
 	public int insertWorkTime(RequestWorkTimeDTO reqTime) {
 		Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
 		PreparedStatement pstmt = null;
@@ -85,4 +353,37 @@ public class AttendanceDAO {
 			ConnectionHelper.close(conn);
 		}
 	}
+	
+	//급여부분 연계
+	//굳이 결과 집합 사용할 필요 없으니 프로시저로 돌리고 값만 받기
+	public char findIsClosed(YearMonth ym) {
+		Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
+	    CallableStatement cstmt = null;
+
+	    String sql = "{ call CHECK_MONTH_ATTENDANCE_CLOSED(?, ?) }";
+
+	    try {
+	        cstmt = conn.prepareCall(sql);
+
+	        cstmt.setString(1, ym.toString()); //"2026-05"
+	        cstmt.registerOutParameter(2, Types.CHAR);
+
+	        cstmt.execute();
+
+	        return cstmt.getString(2).charAt(0);
+
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	        return 'N';
+
+	    } finally {
+	        ConnectionHelper.close(cstmt);
+	        ConnectionHelper.close(conn);
+	    }
+	}
+	
+	//급여부분 연계
+//	public OvertimeDTO findOvertimeAmount(Long empId, int yyyy, int month) {
+//		
+//	}
 }
