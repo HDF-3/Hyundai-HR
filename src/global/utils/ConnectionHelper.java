@@ -11,7 +11,7 @@ public class ConnectionHelper {
 
     static {
         try {
-            InputStream input = ConnectionHelper.class.getClassLoader().getResourceAsStream("db.properties");
+            InputStream input = ConnectionHelper.class.getClassLoader().getResourceAsStream("resources/db.properties");
             props.load(input);
         } catch (Exception e) {
             e.printStackTrace();
