@@ -1,6 +1,7 @@
 package humanresource.Service;
 
 import humanresource.DTO.EmployeeDTO;
+import humanresource.DTO.EmployeeInfoDTO;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -71,6 +72,14 @@ public class EmployeeService {
 
         emp.setDeptId(newDeptId);
         return employeeDAO.updateEmployee(emp) > 0;
+    }
+
+    public EmployeeInfoDTO getEmployeeDetail(Long empId) {
+        return employeeDAO.selectEmployeeInfoDetail(empId);
+    }
+
+    public List<EmployeeInfoDTO> getEmployeeInfoList() {
+        return employeeDAO.selectAllEmployeeInfoList();
     }
 
 

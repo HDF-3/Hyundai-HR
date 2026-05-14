@@ -5,6 +5,7 @@ import global.types.DBType;
 import global.types.EmploymentStatus;
 import global.utils.ConnectionHelper;
 import humanresource.DTO.EmployeeDTO;
+import humanresource.DTO.EmployeeInfoDTO;
 
 import java.awt.*;
 import java.sql.Connection;
@@ -213,5 +214,98 @@ public class EmployeeDAO {
         }
         return empList;
     }
+
+
+    // 1. 사원 상세 정보 조회 (EmployeeInfoDTO 반환)
+    public EmployeeInfoDTO selectEmployeeInfoDetail(Long empId) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        EmployeeInfoDTO info = null;
+
+        try {
+            conn = ConnectionHelper.getConnection(DBType.ORACLE);
+
+            // JOIN을 통해 부서명과 직급명을 함께 조회
+            String sql = "SELECT e.EMP_ID, e.NAME, d.DEPT_NAME, p.POSITION_NAME, " +
+                    "e.PAY_GRADE, e.HIRE_DATE, e.GENDER, e.CONTACT, e.EMAIL, e.ADDRESS " +
+                    "FROM EMPLOYEE e " +
+                    "LEFT JOIN DEPARTMENT d ON e.DEPT_ID = d.DEPT_ID " +
+                    "LEFT JOIN POSITION p ON e.POSITION_ID = p.POSITION_ID " +
+                    "WHERE e.EMP_ID = ?";
+
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setLong(1, empId);
+            rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                info = new EmployeeInfoDTO();
+                info.setEmpId(rs.getLong("EMP_ID"));
+                info.setEName(rs.getString("NAME"));
+                info.setDeptName(rs.getString("DEPT_NAME"));
+                info.setPositionName(rs.getString("POSITION_NAME"));
+                info.setPayGrade(rs.getInt("PAY_GRADE"));
+
+                java.sql.Date hireDate = rs.getDate("HIRE_DATE");
+                if (hireDate != null) info.setHireDate(hireDate.toLocalDate());
+
+                info.setGender(rs.getString("GENDER"));
+                info.setContact(rs.getString("CONTACT"));
+                info.setEmail(rs.getString("EMAIL"));
+                info.setAddress(rs.getString("ADDRESS"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            ConnectionHelper.close(rs);
+            ConnectionHelper.close(pstmt);
+            ConnectionHelper.close(conn);
+        }
+        return info;
+    }
+
+    // 2. 전체 사원 목록 조회 (EmployeeInfoDTO 리스트 반환)
+    public List<EmployeeInfoDTO> selectAllEmployeeInfoList() {
+        List<EmployeeInfoDTO> list = new ArrayList<>();
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = ConnectionHelper.getConnection(DBType.ORACLE);
+
+            // 전체 목록 출력용 JOIN 쿼리
+            String sql = "SELECT e.EMP_ID, e.NAME, d.DEPT_NAME, p.POSITION_NAME, e.HIRE_DATE " +
+                    "FROM EMPLOYEE e " +
+                    "LEFT JOIN DEPARTMENT d ON e.DEPT_ID = d.DEPT_ID " +
+                    "LEFT JOIN POSITION p ON e.POSITION_ID = p.POSITION_ID " +
+                    "ORDER BY e.EMP_ID ASC";
+
+            pstmt = conn.prepareStatement(sql);
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                EmployeeInfoDTO info = new EmployeeInfoDTO();
+                info.setEmpId(rs.getLong("EMP_ID"));
+                info.setEName(rs.getString("NAME"));
+                info.setDeptName(rs.getString("DEPT_NAME"));
+                info.setPositionName(rs.getString("POSITION_NAME"));
+
+                java.sql.Date hireDate = rs.getDate("HIRE_DATE");
+                if (hireDate != null) info.setHireDate(hireDate.toLocalDate());
+
+                list.add(info);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            ConnectionHelper.close(rs);
+            ConnectionHelper.close(pstmt);
+            ConnectionHelper.close(conn);
+        }
+        return list;
+    }
+
+
 
 }
