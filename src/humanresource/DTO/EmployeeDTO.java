@@ -16,8 +16,7 @@ public class EmployeeDTO {
     private Long empId;
     private Long deptId;
     private Long positionId;
-    //TODO
-    // 재직, 휴가 상태 enum으로 관리하자
+    private global.types.EmploymentStatus statusId;
     private String ename;
     private LocalDate hireDate;
     private LocalDate resignDate;

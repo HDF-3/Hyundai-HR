@@ -15,26 +15,76 @@ import java.util.List;
 
 public class EmployeeDAO {
 
-//    public int insertEmployee(EmployeeDTO employeeDTO){
-//        Connection conn = null;
-//        PreparedStatement pstmt = null;
-//        int rowcount = 0;
-//
-//        try {
-//            conn = ConnectionHelper.getConnection(DBType.ORACLE);
-//            String sql = ""
-//
-//        } catch (Exception e) {
-//            throw new RuntimeException(e);
-//        }finally {
-//
-//        }
-//        return 0;
-//    }
+    //TODO
+    // insertEmployee(EmployeeDTO): Int     [O]
+    // updateEmployee(EmployeeDTO) : int
+    // selectEmployeeById(int) : EmployeeId     [O]
+    // selectAllEmployees() : List<EmployeeDTO>    [O]
 
-    public int updateEmployee(EmployeeDTO employeeDTO){
+    public int insertEmployee(EmployeeDTO employeeDTO){
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        int rowcount = 0;
 
-        return 0;
+        try {
+            conn = ConnectionHelper.getConnection(DBType.ORACLE);
+            String sql = "INSERT INTO EMPLOYEE(EMP_ID, DEPT_ID, POSITION_ID, ENAME) values(?,?, ?, ?)";
+
+            pstmt = conn.prepareStatement(sql);
+
+            pstmt.setLong(1, employeeDTO.getEmpId());
+            pstmt.setLong(2, employeeDTO.getDeptId());
+            pstmt.setLong(3, employeeDTO.getPositionId());
+            pstmt.setString(4, employeeDTO.getEname());
+
+            rowcount = pstmt.executeUpdate();
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }finally {
+            ConnectionHelper.close(pstmt);
+            ConnectionHelper.close(conn);
+        }
+        return rowcount;
+    }
+
+  public int updateEmployee(EmployeeDTO employeeDTO) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        int rowcount = 0;
+
+        try {
+            conn = ConnectionHelper.getConnection(DBType.ORACLE);
+            // 사번을 제외하고 변경 가능한 모든 항목을 업데이트 (입사일, 성별 등 절대 안 바뀌는 건 빼도 됨)
+            String sql = "UPDATE EMPLOYEE SET DEPT_ID=?, POSITION_ID=?, STATUS_ID=?, ENAME=?, " +
+                         "CONTACT=?, EMAIL=?, ADDRESS=?, SAL_ACCOUNT=?, PAY_GRADE=?, PASSWORD=? " +
+                         "WHERE EMP_ID=?";
+
+            pstmt = conn.prepareStatement(sql);
+
+            pstmt.setLong(1, employeeDTO.getDeptId());
+            pstmt.setLong(2, employeeDTO.getPositionId());
+            pstmt.setString(3, employeeDTO.getStatusId().toString());
+            pstmt.setString(4, employeeDTO.getEname());
+            pstmt.setString(5, employeeDTO.getContact());
+            pstmt.setString(6, employeeDTO.getEmail());
+            pstmt.setString(7, employeeDTO.getAddress());
+            pstmt.setString(8, employeeDTO.getSalAccount());
+            pstmt.setInt(9, employeeDTO.getPayGrade());
+            pstmt.setString(10, employeeDTO.getPassword());
+            
+            // WHERE 조건에 들어갈 사번
+            pstmt.setLong(11, employeeDTO.getEmpId()); 
+
+            rowcount = pstmt.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            ConnectionHelper.close(pstmt);
+            ConnectionHelper.close(conn);
+        }
+        return rowcount;
     }
 
     public EmployeeDTO selectEmployeeById(int empId){
