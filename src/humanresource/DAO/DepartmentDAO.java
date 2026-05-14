@@ -8,6 +8,7 @@ import jdk.jshell.spi.SPIResolutionException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.List;
 
 public class DepartmentDAO {
@@ -60,7 +61,7 @@ public class DepartmentDAO {
         Connection conn = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
-        List<DepartmentDTO> deptList = null;
+        List<DepartmentDTO> deptList = new ArrayList<>();
 
 
         try{
@@ -68,6 +69,9 @@ public class DepartmentDAO {
             String sql = "SELECT * FROM DEPARTMENT";
 
             pstmt = conn.prepareStatement(sql);
+
+            rs = pstmt.executeQuery();
+
             while(rs.next()){
                 DepartmentDTO dept = new DepartmentDTO();
                 dept.setDeptId(rs.getLong("DEPT_ID"));
