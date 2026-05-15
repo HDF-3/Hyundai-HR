@@ -105,20 +105,26 @@ public class DashboardPanel extends JPanel implements Refreshable {
     }
 
     private Summary loadSummary() {
-        List<EmployeeInfoDTO> employees = employeeService.getEmployeeInfoList();
-        List<AttendanceModifyHistoryDTO> attendance = attendanceModifyService.getPendingAttendanceModifyReqs();
+        List<EmployeeInfoDTO> employees = session.isAdmin()
+                ? employeeService.getEmployeeInfoList()
+                : java.util.Collections.<EmployeeInfoDTO>emptyList();
+        List<AttendanceModifyHistoryDTO> attendance = session.isAdmin()
+                ? attendanceModifyService.getPendingAttendanceModifyReqs()
+                : java.util.Collections.<AttendanceModifyHistoryDTO>emptyList();
         List<LeaveRequestDTO> leaves = session.isAdmin()
                 ? leaveService.getPendingApprovalRequests(session.getEmployeeId())
                 : java.util.Collections.<LeaveRequestDTO>emptyList();
-        List<PayrollDTO> payrolls = payrollService.getPayrollList(YearMonth.now());
+        List<PayrollDTO> payrolls = session.isAdmin()
+                ? payrollService.getPayrollList(YearMonth.now())
+                : payrollService.getPayrollList(session.getEmployeeId());
         AnnualLeaveDTO activeLeave = session.getEmployeeId() == null
                 ? null
                 : leaveService.findActiveAnnualLeave(session.getEmployeeId());
 
         return new Summary(
-                employees == null ? 0 : employees.size(),
-                attendance == null ? 0 : attendance.size(),
-                leaves == null ? 0 : leaves.size(),
+                session.isAdmin() ? (employees == null ? 0 : employees.size()) : 1,
+                session.isAdmin() ? (attendance == null ? 0 : attendance.size()) : -1,
+                session.isAdmin() ? (leaves == null ? 0 : leaves.size()) : -1,
                 payrolls == null ? 0 : payrolls.size(),
                 activeLeave == null ? null : activeLeave.getRemainingAnnualLeave()
         );
@@ -126,7 +132,7 @@ public class DashboardPanel extends JPanel implements Refreshable {
 
     private void applySummary(Summary summary) {
         employeeCount.setText(String.valueOf(summary.employeeCount));
-        pendingAttendance.setText(String.valueOf(summary.pendingAttendance));
+        pendingAttendance.setText(summary.pendingAttendance < 0 ? "-" : String.valueOf(summary.pendingAttendance));
         pendingLeave.setText(session.isAdmin() ? String.valueOf(summary.pendingLeave) : "-");
         payrollCount.setText(String.valueOf(summary.payrollCount));
         annualLeave.setText(summary.annualLeave == null ? "-" : String.valueOf(summary.annualLeave));

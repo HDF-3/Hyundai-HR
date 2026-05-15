@@ -19,6 +19,7 @@ import attendance.service.AttendanceModifyService;
 import attendance.service.AttendanceService;
 import humanresource.service.DepartmentService;
 import humanresource.service.EmployeeService;
+import humanresource.service.PerformanceEvaluationService;
 import leave.service.LeaveService;
 import payroll.service.PayrollService;
 import ui.AppSession;
@@ -41,6 +42,7 @@ public class ShellPanel extends JPanel {
             AppSession session,
             EmployeeService employeeService,
             DepartmentService departmentService,
+            PerformanceEvaluationService performanceEvaluationService,
             AttendanceService attendanceService,
             AttendanceModifyService attendanceModifyService,
             LeaveService leaveService,
@@ -52,13 +54,22 @@ public class ShellPanel extends JPanel {
         setBackground(UiKit.BG);
 
         add(sidebar(), BorderLayout.WEST);
-        add(shell(employeeService, departmentService, attendanceService, attendanceModifyService, leaveService, payrollService), BorderLayout.CENTER);
+        add(shell(
+                employeeService,
+                departmentService,
+                performanceEvaluationService,
+                attendanceService,
+                attendanceModifyService,
+                leaveService,
+                payrollService
+        ), BorderLayout.CENTER);
         navigate("dashboard");
     }
 
     private JPanel shell(
             EmployeeService employeeService,
             DepartmentService departmentService,
+            PerformanceEvaluationService performanceEvaluationService,
             AttendanceService attendanceService,
             AttendanceModifyService attendanceModifyService,
             LeaveService leaveService,
@@ -69,7 +80,10 @@ public class ShellPanel extends JPanel {
         shell.add(topBar(), BorderLayout.NORTH);
 
         addScreen("dashboard", new DashboardPanel(session, employeeService, attendanceModifyService, leaveService, payrollService));
-        addScreen("employees", new EmployeesPanel(session, employeeService, departmentService));
+        addScreen("profile", new ProfilePanel(session, employeeService));
+        if (session.isAdmin()) {
+            addScreen("employees", new EmployeesPanel(session, employeeService, departmentService, performanceEvaluationService));
+        }
         addScreen("attendance", new AttendancePanel(session, attendanceService, attendanceModifyService));
         addScreen("leave", new LeavePanel(session, leaveService));
         addScreen("payroll", new PayrollPanel(session, payrollService));
@@ -84,15 +98,20 @@ public class ShellPanel extends JPanel {
         sidebar.setBackground(new Color(32, 39, 49));
         sidebar.setBorder(BorderFactory.createEmptyBorder(18, 14, 18, 14));
 
-        JLabel brand = new JLabel("<html><b>Hyundai HR</b><br><span style='font-size:10px'>Back Office</span></html>");
+        JLabel brand = new JLabel("<html><b>Hyundai HR</b><br><span style='font-size:10px'>"
+                + (session.isAdmin() ? "Admin Console" : "Self Service")
+                + "</span></html>");
         brand.setForeground(Color.WHITE);
         brand.setFont(new Font("Dialog", Font.PLAIN, 17));
         sidebar.add(brand, BorderLayout.NORTH);
 
         JPanel nav = new JPanel(new GridLayout(0, 1, 0, 8));
         nav.setOpaque(false);
+        addNav(nav, "profile", "내 정보");
         addNav(nav, "dashboard", "대시보드");
-        addNav(nav, "employees", "인사");
+        if (session.isAdmin()) {
+            addNav(nav, "employees", "인사");
+        }
         addNav(nav, "attendance", "근태");
         addNav(nav, "leave", "휴가");
         addNav(nav, "payroll", "급여");
@@ -112,7 +131,8 @@ public class ShellPanel extends JPanel {
                 BorderFactory.createEmptyBorder(10, 18, 10, 18)
         ));
 
-        JLabel user = new JLabel(session.getEmployeeName() + " · " + session.getEmployeeId());
+        JLabel user = new JLabel(session.getEmployeeName() + " · " + session.getEmployeeId()
+                + " · " + (session.isAdmin() ? "Admin" : "User"));
         user.setForeground(UiKit.TEXT);
 
         JLabel meta = new JLabel("오늘 " + LocalDate.now() + " · DB HDF");
@@ -141,6 +161,9 @@ public class ShellPanel extends JPanel {
     }
 
     public void navigate(String key) {
+        if (!navButtons.containsKey(key)) {
+            return;
+        }
         currentKey = key;
         cardLayout.show(content, key);
         for (Map.Entry<String, JButton> entry : navButtons.entrySet()) {

@@ -17,11 +17,15 @@ import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
 import global.types.EmploymentStatus;
+import global.types.PerformanceGrade;
+import humanresource.dto.AssignmentHistoryDTO;
 import humanresource.dto.DepartmentDTO;
 import humanresource.dto.EmployeeDTO;
 import humanresource.dto.EmployeeInfoDTO;
+import humanresource.dto.PerformanceEvaluationDTO;
 import humanresource.service.DepartmentService;
 import humanresource.service.EmployeeService;
+import humanresource.service.PerformanceEvaluationService;
 import ui.AppSession;
 import ui.Async;
 import ui.Refreshable;
@@ -31,11 +35,16 @@ public class EmployeesPanel extends JPanel implements Refreshable {
     private final AppSession session;
     private final EmployeeService employeeService;
     private final DepartmentService departmentService;
+    private final PerformanceEvaluationService performanceEvaluationService;
 
     private final DefaultTableModel employeeModel = UiKit.model("사번", "이름", "부서", "직급", "호봉", "입사일");
     private final JTable employeeTable = UiKit.table(employeeModel);
     private final DefaultTableModel departmentModel = UiKit.model("부서ID", "부서명", "설명", "관리자", "상위부서");
     private final JTable departmentTable = UiKit.table(departmentModel);
+    private final DefaultTableModel assignmentHistoryModel = UiKit.model("이력ID", "이름", "부서", "직급", "호봉", "사유", "시작일", "종료일");
+    private final JTable assignmentHistoryTable = UiKit.table(assignmentHistoryModel);
+    private final DefaultTableModel evaluationModel = UiKit.model("평가ID", "사번", "연도", "분기", "등급");
+    private final JTable evaluationTable = UiKit.table(evaluationModel);
     private final JLabel status = UiKit.statusLabel();
 
     private final JTextField empIdField = UiKit.field(12);
@@ -60,12 +69,24 @@ public class EmployeesPanel extends JPanel implements Refreshable {
     private final JTextField deptManagerField = UiKit.field(10);
     private final JTextField deptParentField = UiKit.field(10);
 
+    private final JTextField historyEmpIdField = UiKit.field(10);
+    private final JTextField evaluationEmpIdField = UiKit.field(10);
+    private final JTextField evaluationYearField = UiKit.field(10);
+    private final JTextField evaluationQuarterField = UiKit.field(10);
+    private final JComboBox<PerformanceGrade> evaluationGradeCombo = UiKit.combo(PerformanceGrade.values());
+
     private EmployeeDTO selectedEmployee;
 
-    public EmployeesPanel(AppSession session, EmployeeService employeeService, DepartmentService departmentService) {
+    public EmployeesPanel(
+            AppSession session,
+            EmployeeService employeeService,
+            DepartmentService departmentService,
+            PerformanceEvaluationService performanceEvaluationService
+    ) {
         this.session = session;
         this.employeeService = employeeService;
         this.departmentService = departmentService;
+        this.performanceEvaluationService = performanceEvaluationService;
         build();
     }
 
@@ -74,9 +95,14 @@ public class EmployeesPanel extends JPanel implements Refreshable {
         JPanel root = UiKit.screen("인사", "직원, 부서, 관리자 권한을 관리합니다.");
         add(root, BorderLayout.CENTER);
 
+        evaluationYearField.setText(String.valueOf(LocalDate.now().getYear()));
+        evaluationQuarterField.setText(String.valueOf((LocalDate.now().getMonthValue() + 2) / 3));
+
         JTabbedPane tabs = new JTabbedPane();
         tabs.addTab("직원", employeeTab());
         tabs.addTab("부서", departmentTab());
+        tabs.addTab("근무이력", assignmentHistoryTab());
+        tabs.addTab("인사평가", performanceEvaluationTab());
         root.add(tabs, BorderLayout.CENTER);
         root.add(status, BorderLayout.SOUTH);
     }
@@ -180,10 +206,67 @@ public class EmployeesPanel extends JPanel implements Refreshable {
         return tab;
     }
 
+    private JPanel assignmentHistoryTab() {
+        JPanel tab = new JPanel(new BorderLayout(12, 12));
+        tab.setOpaque(false);
+
+        JPanel toolbarPanel = UiKit.surface();
+        JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        toolbar.setOpaque(false);
+        toolbar.add(new JLabel("사번"));
+        toolbar.add(historyEmpIdField);
+        JButton load = UiKit.primaryButton("근무이력 조회");
+        load.addActionListener(e -> refreshAssignmentHistory());
+        toolbar.add(load);
+        toolbarPanel.add(toolbar, BorderLayout.CENTER);
+
+        JPanel tablePanel = UiKit.surface();
+        tablePanel.add(UiKit.scroll(assignmentHistoryTable), BorderLayout.CENTER);
+
+        tab.add(toolbarPanel, BorderLayout.NORTH);
+        tab.add(tablePanel, BorderLayout.CENTER);
+        return tab;
+    }
+
+    private JPanel performanceEvaluationTab() {
+        JPanel tab = new JPanel(new BorderLayout(12, 12));
+        tab.setOpaque(false);
+
+        JPanel formPanel = UiKit.surface();
+        formPanel.add(new JLabel("인사평가 등록"), BorderLayout.NORTH);
+        JPanel form = UiKit.formPanel();
+        int row = 0;
+        UiKit.addField(form, row++, "사번", evaluationEmpIdField);
+        UiKit.addField(form, row++, "연도", evaluationYearField);
+        UiKit.addField(form, row++, "분기", evaluationQuarterField);
+        UiKit.addField(form, row++, "등급", evaluationGradeCombo);
+        formPanel.add(form, BorderLayout.CENTER);
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        actions.setOpaque(false);
+        JButton load = UiKit.button("평가 조회");
+        JButton register = UiKit.primaryButton("평가 등록");
+        load.addActionListener(e -> refreshPerformanceEvaluations());
+        register.addActionListener(e -> registerPerformanceEvaluation());
+        actions.add(load);
+        actions.add(register);
+        formPanel.add(actions, BorderLayout.SOUTH);
+
+        JPanel tablePanel = UiKit.surface();
+        tablePanel.add(UiKit.scroll(evaluationTable), BorderLayout.CENTER);
+
+        JPanel split = new JPanel(new GridLayout(1, 2, 12, 0));
+        split.setOpaque(false);
+        split.add(formPanel);
+        split.add(tablePanel);
+        tab.add(split, BorderLayout.CENTER);
+        return tab;
+    }
+
     @Override
     public void refresh() {
         refreshEmployees();
         refreshDepartments();
+        refreshSelectedEmployeeSidePanels();
     }
 
     private void refreshEmployees() {
@@ -222,6 +305,86 @@ public class EmployeesPanel extends JPanel implements Refreshable {
         }, e -> UiKit.error(this, e));
     }
 
+    private void refreshSelectedEmployeeSidePanels() {
+        if (selectedEmployee == null) {
+            return;
+        }
+        refreshAssignmentHistory();
+        refreshPerformanceEvaluations();
+    }
+
+    private void refreshAssignmentHistory() {
+        try {
+            Long empId = requiredLong(historyEmpIdField, "사번");
+            Async.run(this, () -> employeeService.getAssignmentHistory(empId), list -> {
+                assignmentHistoryModel.setRowCount(0);
+                for (AssignmentHistoryDTO dto : safe(list)) {
+                    assignmentHistoryModel.addRow(new Object[] {
+                            dto.getHistoryId(),
+                            dto.getEName(),
+                            dto.getDeptName(),
+                            dto.getPositionName(),
+                            dto.getPayGrade(),
+                            dto.getReasonName(),
+                            dto.getStartDate(),
+                            dto.getEndDate()
+                    });
+                }
+                status.setText("근무이력 " + assignmentHistoryModel.getRowCount() + "건");
+            }, e -> UiKit.error(this, e));
+        } catch (RuntimeException e) {
+            UiKit.validation(this, e);
+        }
+    }
+
+    private void refreshPerformanceEvaluations() {
+        try {
+            Long empId = requiredLong(evaluationEmpIdField, "사번");
+            Async.run(this, () -> performanceEvaluationService.getPerformanceEvaluationHistory(empId), list -> {
+                evaluationModel.setRowCount(0);
+                for (PerformanceEvaluationDTO dto : safe(list)) {
+                    evaluationModel.addRow(new Object[] {
+                            dto.getEvaluationId(),
+                            dto.getTargetEmpId(),
+                            dto.getEvaluationYear(),
+                            dto.getEvaluationQuarter(),
+                            dto.getPerformanceGrade()
+                    });
+                }
+                status.setText("인사평가 " + evaluationModel.getRowCount() + "건");
+            }, e -> UiKit.error(this, e));
+        } catch (RuntimeException e) {
+            UiKit.validation(this, e);
+        }
+    }
+
+    private void registerPerformanceEvaluation() {
+        try {
+            PerformanceEvaluationDTO dto = new PerformanceEvaluationDTO();
+            dto.setTargetEmpId(requiredLong(evaluationEmpIdField, "사번"));
+            dto.setEvaluationYear(requiredText(evaluationYearField, "연도"));
+            Long quarter = requiredLong(evaluationQuarterField, "분기");
+            if (quarter < 1 || quarter > 4) {
+                throw new IllegalArgumentException("분기는 1~4 사이로 입력하세요.");
+            }
+            dto.setEvaluationQuarter(quarter);
+            dto.setPerformanceGrade((PerformanceGrade) evaluationGradeCombo.getSelectedItem());
+
+            Async.run(this, () -> {
+                try {
+                    return performanceEvaluationService.registerPerformanceEvaluation(dto, session.getCurrentEmployee());
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }, result -> {
+                status.setText(result ? "인사평가 등록 완료" : "인사평가 등록 실패");
+                refreshPerformanceEvaluations();
+            }, e -> UiKit.error(this, e));
+        } catch (RuntimeException e) {
+            UiKit.validation(this, e);
+        }
+    }
+
     private void loadSelectedEmployee() {
         int viewRow = employeeTable.getSelectedRow();
         if (viewRow < 0) {
@@ -232,6 +395,7 @@ public class EmployeesPanel extends JPanel implements Refreshable {
         Async.run(this, () -> employeeService.getEmployeeinfo(empId), employee -> {
             selectedEmployee = employee;
             populateEmployee(employee);
+            refreshSelectedEmployeeSidePanels();
         }, e -> UiKit.error(this, e));
     }
 
@@ -254,6 +418,8 @@ public class EmployeesPanel extends JPanel implements Refreshable {
         payGradeField.setText(UiKit.display(employee.getPayGrade()));
         passwordField.setText("");
         adminBox.setSelected(Boolean.TRUE.equals(employee.getIsAdmin()));
+        historyEmpIdField.setText(UiKit.display(employee.getEmpId()));
+        evaluationEmpIdField.setText(UiKit.display(employee.getEmpId()));
     }
 
     private void registerEmployee() {

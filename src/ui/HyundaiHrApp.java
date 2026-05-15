@@ -10,6 +10,7 @@ import attendance.service.AttendanceService;
 import humanresource.dto.EmployeeDTO;
 import humanresource.service.DepartmentService;
 import humanresource.service.EmployeeService;
+import humanresource.service.PerformanceEvaluationService;
 import leave.service.LeaveService;
 import payroll.service.PayrollService;
 import ui.panels.LoginPanel;
@@ -19,6 +20,7 @@ public class HyundaiHrApp extends JFrame {
     private final AppSession session = new AppSession();
     private final EmployeeService employeeService = new EmployeeService();
     private final DepartmentService departmentService = new DepartmentService();
+    private final PerformanceEvaluationService performanceEvaluationService = new PerformanceEvaluationService();
     private final AttendanceService attendanceService = new AttendanceService();
     private final AttendanceModifyService attendanceModifyService = new AttendanceModifyService();
     private final LeaveService leaveService = new LeaveService();
@@ -60,6 +62,7 @@ public class HyundaiHrApp extends JFrame {
                 session,
                 employeeService,
                 departmentService,
+                performanceEvaluationService,
                 attendanceService,
                 attendanceModifyService,
                 leaveService,

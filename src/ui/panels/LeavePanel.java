@@ -57,6 +57,8 @@ public class LeavePanel extends JPanel implements Refreshable {
         add(root, BorderLayout.CENTER);
 
         empIdField.setText(UiKit.display(session.getEmployeeId()));
+        empIdField.setEditable(session.isAdmin());
+        empIdField.setEnabled(session.isAdmin());
         startField.setText(LocalDate.now().plusDays(1).toString());
         endField.setText(LocalDate.now().plusDays(1).toString());
 
@@ -64,7 +66,9 @@ public class LeavePanel extends JPanel implements Refreshable {
         tabs.addTab("연차 현황", annualTab());
         tabs.addTab("휴가 신청", requestTab());
         tabs.addTab("내 신청", myRequestsTab());
-        tabs.addTab("승인", approvalTab());
+        if (session.isAdmin()) {
+            tabs.addTab("승인", approvalTab());
+        }
         root.add(tabs, BorderLayout.CENTER);
         root.add(status, BorderLayout.SOUTH);
     }
@@ -282,6 +286,9 @@ public class LeavePanel extends JPanel implements Refreshable {
     }
 
     private Long currentEmployeeId() {
+        if (!session.isAdmin()) {
+            return session.getEmployeeId();
+        }
         return UiKit.longValue(empIdField);
     }
 

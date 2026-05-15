@@ -57,14 +57,20 @@ public class PayrollPanel extends JPanel implements Refreshable {
         add(root, BorderLayout.CENTER);
 
         monthField.setText(YearMonth.now().minusMonths(1).toString());
-        employeeFilterField.setText("");
+        employeeFilterField.setText(session.isAdmin() ? "" : UiKit.display(session.getEmployeeId()));
+        employeeFilterField.setEditable(session.isAdmin());
+        employeeFilterField.setEnabled(session.isAdmin());
         allowanceEmpIdField.setText(UiKit.display(session.getEmployeeId()));
+        allowanceEmpIdField.setEditable(session.isAdmin());
+        allowanceEmpIdField.setEnabled(session.isAdmin());
         allowanceMonthField.setText(YearMonth.now().minusMonths(1).toString());
 
         JTabbedPane tabs = new JTabbedPane();
         tabs.addTab("급여 목록", payrollListTab());
         tabs.addTab("상세", detailTab());
-        tabs.addTab("추가수당", allowanceTab());
+        if (session.isAdmin()) {
+            tabs.addTab("추가수당", allowanceTab());
+        }
         root.add(tabs, BorderLayout.CENTER);
         root.add(status, BorderLayout.SOUTH);
     }
@@ -78,8 +84,10 @@ public class PayrollPanel extends JPanel implements Refreshable {
         toolbar.setOpaque(false);
         toolbar.add(new JLabel("급여월"));
         toolbar.add(monthField);
-        toolbar.add(new JLabel("사번"));
-        toolbar.add(employeeFilterField);
+        if (session.isAdmin()) {
+            toolbar.add(new JLabel("사번"));
+            toolbar.add(employeeFilterField);
+        }
 
         JButton refreshMonth = UiKit.button("월 조회");
         JButton refreshEmployee = UiKit.button("사번 조회");
@@ -98,11 +106,13 @@ public class PayrollPanel extends JPanel implements Refreshable {
         detail.addActionListener(e -> loadSelectedDetail());
 
         toolbar.add(refreshMonth);
-        toolbar.add(refreshEmployee);
-        toolbar.add(create);
-        toolbar.add(confirm);
-        toolbar.add(pay);
-        toolbar.add(delete);
+        if (session.isAdmin()) {
+            toolbar.add(refreshEmployee);
+            toolbar.add(create);
+            toolbar.add(confirm);
+            toolbar.add(pay);
+            toolbar.add(delete);
+        }
         toolbar.add(detail);
         toolbarPanel.add(toolbar, BorderLayout.CENTER);
 
@@ -168,13 +178,19 @@ public class PayrollPanel extends JPanel implements Refreshable {
     @Override
     public void refresh() {
         refreshPayrollByMonth();
-        refreshAllowances();
+        if (session.isAdmin()) {
+            refreshAllowances();
+        }
     }
 
     private void refreshPayrollByMonth() {
         try {
             YearMonth month = UiKit.yearMonthValue(monthField);
-            Async.run(this, () -> payrollService.getPayrollList(month), this::fillPayrollRows, e -> UiKit.error(this, e));
+            if (session.isAdmin()) {
+                Async.run(this, () -> payrollService.getPayrollList(month), this::fillPayrollRows, e -> UiKit.error(this, e));
+            } else {
+                Async.run(this, () -> payrollService.getPayrollList(session.getEmployeeId()), list -> fillPayrollRows(filterPayrollRows(list, month)), e -> UiKit.error(this, e));
+            }
         } catch (RuntimeException e) {
             UiKit.validation(this, e);
         }
@@ -182,7 +198,7 @@ public class PayrollPanel extends JPanel implements Refreshable {
 
     private void refreshPayrollByEmployee() {
         try {
-            Long employeeId = UiKit.longValue(employeeFilterField);
+            Long employeeId = session.isAdmin() ? UiKit.longValue(employeeFilterField) : session.getEmployeeId();
             if (employeeId == null) {
                 throw new IllegalArgumentException("사번을 입력하세요.");
             }
@@ -193,6 +209,10 @@ public class PayrollPanel extends JPanel implements Refreshable {
     }
 
     private void createPayroll() {
+        if (!session.isAdmin()) {
+            UiKit.info(this, "관리자만 처리할 수 있습니다.");
+            return;
+        }
         try {
             YearMonth month = UiKit.yearMonthValue(monthField);
             Async.run(this, () -> {
@@ -208,6 +228,10 @@ public class PayrollPanel extends JPanel implements Refreshable {
     }
 
     private void updateMonthStatus(boolean confirm) {
+        if (!session.isAdmin()) {
+            UiKit.info(this, "관리자만 처리할 수 있습니다.");
+            return;
+        }
         try {
             YearMonth month = UiKit.yearMonthValue(monthField);
             Async.run(this,
@@ -223,6 +247,10 @@ public class PayrollPanel extends JPanel implements Refreshable {
     }
 
     private void deleteSelectedPayroll() {
+        if (!session.isAdmin()) {
+            UiKit.info(this, "관리자만 처리할 수 있습니다.");
+            return;
+        }
         Long payrollId = selectedPayrollId();
         if (payrollId == null) {
             UiKit.info(this, "삭제할 급여를 선택하세요.");
@@ -247,6 +275,10 @@ public class PayrollPanel extends JPanel implements Refreshable {
     }
 
     private void refreshAllowances() {
+        if (!session.isAdmin()) {
+            allowanceModel.setRowCount(0);
+            return;
+        }
         try {
             Long empId = UiKit.longValue(allowanceEmpIdField);
             YearMonth month = UiKit.yearMonthValue(allowanceMonthField);
@@ -271,6 +303,10 @@ public class PayrollPanel extends JPanel implements Refreshable {
     }
 
     private void addAllowance() {
+        if (!session.isAdmin()) {
+            UiKit.info(this, "관리자만 처리할 수 있습니다.");
+            return;
+        }
         try {
             AdditionalAllowanceDTO dto = new AdditionalAllowanceDTO();
             Long allowanceId = UiKit.longValue(allowanceIdField);
@@ -291,6 +327,19 @@ public class PayrollPanel extends JPanel implements Refreshable {
         } catch (RuntimeException e) {
             UiKit.validation(this, e);
         }
+    }
+
+    private List<PayrollDTO> filterPayrollRows(List<PayrollDTO> list, YearMonth month) {
+        if (month == null) {
+            return list;
+        }
+        List<PayrollDTO> filtered = new java.util.ArrayList<PayrollDTO>();
+        for (PayrollDTO dto : safe(list)) {
+            if (month.equals(dto.getPayrollYearMonth())) {
+                filtered.add(dto);
+            }
+        }
+        return filtered;
     }
 
     private void fillPayrollRows(List<PayrollDTO> list) {

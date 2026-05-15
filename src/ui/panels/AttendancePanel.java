@@ -68,6 +68,8 @@ public class AttendancePanel extends JPanel implements Refreshable {
         add(root, BorderLayout.CENTER);
 
         empIdField.setText(UiKit.display(session.getEmployeeId()));
+        empIdField.setEditable(session.isAdmin());
+        empIdField.setEnabled(session.isAdmin());
         startDateField.setText(LocalDate.now().withDayOfMonth(1).toString());
         endDateField.setText(LocalDate.now().toString());
         workMonthField.setText(YearMonth.now().plusMonths(1).toString());
@@ -182,8 +184,10 @@ public class AttendancePanel extends JPanel implements Refreshable {
         approve.addActionListener(e -> processSelectedModify(true));
         reject.addActionListener(e -> processSelectedModify(false));
         toolbar.add(refresh);
-        toolbar.add(approve);
-        toolbar.add(reject);
+        if (session.isAdmin()) {
+            toolbar.add(approve);
+            toolbar.add(reject);
+        }
         list.add(toolbar, BorderLayout.NORTH);
         list.add(UiKit.scroll(modifyTable), BorderLayout.CENTER);
 
@@ -219,11 +223,11 @@ public class AttendancePanel extends JPanel implements Refreshable {
         try {
             LocalDate start = UiKit.dateValue(startDateField);
             LocalDate end = UiKit.dateValue(endDateField);
-            if (start != null && end != null) {
+            if (session.isAdmin() && start != null && end != null) {
                 Async.run(this, () -> attendanceService.getNormalAttendances(start, end), list -> fillNormalRows(list, "정상", null, null), e -> UiKit.error(this, e));
             } else {
                 Long empId = requiredEmpId();
-                Async.run(this, () -> attendanceService.getNormalAttendances(empId), list -> fillNormalRows(list, "정상", null, null), e -> UiKit.error(this, e));
+                Async.run(this, () -> attendanceService.getNormalAttendances(empId), list -> fillNormalRows(filterNormalRows(list, start, end), "정상", null, null), e -> UiKit.error(this, e));
             }
         } catch (RuntimeException e) {
             UiKit.validation(this, e);
@@ -234,11 +238,11 @@ public class AttendancePanel extends JPanel implements Refreshable {
         try {
             LocalDate start = UiKit.dateValue(startDateField);
             LocalDate end = UiKit.dateValue(endDateField);
-            if (start != null && end != null) {
+            if (session.isAdmin() && start != null && end != null) {
                 Async.run(this, () -> attendanceService.getMissingAttenDances(start, end), this::fillMissingRows, e -> UiKit.error(this, e));
             } else {
                 Long empId = requiredEmpId();
-                Async.run(this, () -> attendanceService.getMissingAttenDances(empId), this::fillMissingRows, e -> UiKit.error(this, e));
+                Async.run(this, () -> attendanceService.getMissingAttenDances(empId), list -> fillMissingRows(filterMissingRows(list, start, end)), e -> UiKit.error(this, e));
             }
         } catch (RuntimeException e) {
             UiKit.validation(this, e);
@@ -306,7 +310,11 @@ public class AttendancePanel extends JPanel implements Refreshable {
     }
 
     private void loadPendingModifyRequests() {
-        Async.run(this, () -> modifyService.getPendingAttendanceModifyReqs(), list -> {
+        Async.run(this,
+                () -> session.isAdmin()
+                        ? modifyService.getPendingAttendanceModifyReqs()
+                        : modifyService.getAttendanceModifyReqs(requiredEmpId()),
+                list -> {
             modifyModel.setRowCount(0);
             for (AttendanceModifyHistoryDTO dto : safe(list)) {
                 modifyModel.addRow(new Object[] {
@@ -325,6 +333,10 @@ public class AttendancePanel extends JPanel implements Refreshable {
     }
 
     private void processSelectedModify(boolean approve) {
+        if (!session.isAdmin()) {
+            UiKit.info(this, "관리자만 처리할 수 있습니다.");
+            return;
+        }
         int viewRow = modifyTable.getSelectedRow();
         if (viewRow < 0) {
             UiKit.info(this, "처리할 정정 요청을 선택하세요.");
@@ -374,7 +386,46 @@ public class AttendancePanel extends JPanel implements Refreshable {
         status.setText("누락/휴가 " + attendanceModel.getRowCount() + "건");
     }
 
+    private List<NormalAttendanceDTO> filterNormalRows(List<NormalAttendanceDTO> list, LocalDate start, LocalDate end) {
+        if (start == null && end == null) {
+            return list;
+        }
+        List<NormalAttendanceDTO> filtered = new java.util.ArrayList<NormalAttendanceDTO>();
+        for (NormalAttendanceDTO dto : safe(list)) {
+            if (isWithin(dto.getWorkDate(), start, end)) {
+                filtered.add(dto);
+            }
+        }
+        return filtered;
+    }
+
+    private List<MissingAttendanceDTO> filterMissingRows(List<MissingAttendanceDTO> list, LocalDate start, LocalDate end) {
+        if (start == null && end == null) {
+            return list;
+        }
+        List<MissingAttendanceDTO> filtered = new java.util.ArrayList<MissingAttendanceDTO>();
+        for (MissingAttendanceDTO dto : safe(list)) {
+            if (isWithin(dto.getWorkDate(), start, end)) {
+                filtered.add(dto);
+            }
+        }
+        return filtered;
+    }
+
+    private boolean isWithin(LocalDate value, LocalDate start, LocalDate end) {
+        if (value == null) {
+            return false;
+        }
+        if (start != null && value.isBefore(start)) {
+            return false;
+        }
+        return end == null || !value.isAfter(end);
+    }
+
     private Long requiredEmpId() {
+        if (!session.isAdmin()) {
+            return session.getEmployeeId();
+        }
         Long value = UiKit.longValue(empIdField);
         if (value == null) {
             throw new IllegalArgumentException("사번은 필수입니다.");
