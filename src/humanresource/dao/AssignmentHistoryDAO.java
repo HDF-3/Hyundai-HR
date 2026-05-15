@@ -21,7 +21,7 @@ public class AssignmentHistoryDAO {
         try {
             conn = ConnectionHelper.getConnection(DBType.ORACLE);
 
-            String sql = "SELECT h.HISTORY_ID, e.NAME, d.DEPT_NAME, p.POSITION_NAME, e.PAY_GRADE, " +
+            String sql = "SELECT h.HISTORY_ID, e.NAME, d.DEPT_NAME, p.POSITION_NAME, h.PAY_GRADE, " +
                     "r.REASON_NAME, h.START_DATE, h.END_DATE " +
                     "FROM ASSIGNMENT_HISTORY h " +
                     "JOIN EMPLOYEE e ON h.EMP_ID = e.EMP_ID " +
@@ -29,7 +29,7 @@ public class AssignmentHistoryDAO {
                     "LEFT JOIN POSITION p ON h.POSITION_ID = p.POSITION_ID " +
                     "LEFT JOIN ASSIGNMENT_CHANGE_REASON r ON h.REASON_ID = r.REASON_ID " +
                     "WHERE h.EMP_ID = ? " +
-                    "ORDER BY h.START_DATE DESC";
+                    "ORDER BY h.History_ID DESC";
 
             pstmt = conn.prepareStatement(sql);
             pstmt.setLong(1, empId);
@@ -41,6 +41,7 @@ public class AssignmentHistoryDAO {
                 dto.setEName(rs.getString("NAME"));
                 dto.setDeptName(rs.getString("DEPT_NAME"));
                 dto.setPositionName(rs.getString("POSITION_NAME"));
+                
                 dto.setPayGrade(rs.getInt("PAY_GRADE"));
                 dto.setReasonName(rs.getString("REASON_NAME"));
 
