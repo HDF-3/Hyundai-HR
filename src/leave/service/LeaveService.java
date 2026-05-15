@@ -144,6 +144,10 @@ public class LeaveService {
             } else if (status == CommonStatus.REJECTED) {
                 System.out.println("휴가 신청이 반려되었습니다.");
             }
+            else {
+                throw new IllegalArgumentException("잘못된 결재 상태값입니다. 승인(APPROVED) 또는 반려(REJECTED)만 처리 가능합니다. 입력값: " + status);
+            }
+
             boolean logResult = leaveApprovalDAO.insertLeaveApprovalLog(conn, adminId, leaveRequestId);
             if (!logResult) {
                 throw new RuntimeException("결재 이력 기록에 실패했습니다.");
