@@ -123,4 +123,20 @@ public class LeaveDAO {
         }
         return list;
     }
+    public boolean cancelLeaveRequest(Long leaveRequestId) {
+        String sql = "UPDATE LEAVE_REQUEST SET REQUEST_STATUS = 'CANCELED' " +
+                "WHERE LEAVE_REQUEST_ID = ? AND REQUEST_STATUS = 'PENDING'";
+
+        try (
+                Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
+                PreparedStatement pstmt = conn.prepareStatement(sql);
+                ){
+            pstmt.setLong(1, leaveRequestId);
+            int rowCount = pstmt.executeUpdate();
+            return rowCount > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
