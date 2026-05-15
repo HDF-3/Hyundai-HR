@@ -47,8 +47,20 @@ public class LeaveApprovalDAO {
     }
 
     public boolean updateLeaveRequestStatus(Long leaveRequestId, CommonStatus status) {
+        String sql = "update LEAVE_REQUEST SET REQUEST_STATUS = ? WHERE LEAVE_REQUEST_ID = ?";
 
-        return false;
+        try (
+                Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
+                PreparedStatement pstmt = conn.prepareStatement(sql);
+                ){
+            pstmt.setString(1, status.toString());
+            pstmt.setLong(2, leaveRequestId);
+
+            return pstmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
 }
