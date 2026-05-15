@@ -79,29 +79,21 @@ public class EarningDAO {
         }
     }
 
-    public int updateAdditionalAllowance(Long payrollId, BigDecimal additionalAllowance) {
-        Connection conn = null;
+    public int updateAdditionalAllowance(Long payrollId, BigDecimal additionalAllowance, Connection conn) throws SQLException {
         PreparedStatement pstmt = null;
-        int rowcount = 0;
 
         try {
-            conn = ConnectionHelper.getConnection(DBType.ORACLE);
             String sql = "update earning set additional_allowance=? where payroll_id=?";
 
             pstmt = conn.prepareStatement(sql);
             pstmt.setBigDecimal(1, additionalAllowance);
             pstmt.setLong(2, payrollId);
 
-            rowcount = pstmt.executeUpdate();
+            return pstmt.executeUpdate();
 
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
         } finally {
             ConnectionHelper.close(pstmt);
-            ConnectionHelper.close(conn);
         }
-
-        return rowcount;
     }
 
     public EarningDTO findEarningByPayrollId(Long payrollId) {

@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.YearMonth;
 
 import global.types.CommonStatus;
@@ -139,6 +140,47 @@ public class PayrollDetailDAO {
         }
 
         return detail;
+    }
+
+    public PayrollDetailDTO findPayrollDetail(Long employeeId, YearMonth yearMonth, Connection conn) throws SQLException {
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        PayrollDetailDTO detail = null;
+
+        try {
+            String sql =
+                    "select " +
+                    "p.payroll_id, p.employee_id, e.name as employee_name, " +
+                    "p.payroll_year_month, p.total_earnings, p.total_deductions, p.net_pay, " +
+                    "p.status, p.confirmed_at, p.pay_date, " +
+                    "er.base_salary, er.overtime_pay, er.transportation_allowance, " +
+                    "er.performance_bonus, er.additional_allowance, " +
+                    "d.national_pension, d.health_insurance, d.long_term_care_insurance, " +
+                    "d.employment_insurance, d.income_tax, d.local_income_tax " +
+                    "from payroll p " +
+                    "join employee e on p.employee_id = e.emp_id " +
+                    "left join earning er on p.payroll_id = er.payroll_id " +
+                    "left join deduction d on p.payroll_id = d.payroll_id " +
+                    "where p.employee_id = ? " +
+                    "and p.payroll_year_month = ?";
+
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setLong(1, employeeId);
+            pstmt.setDate(2, Date.valueOf(yearMonth.atDay(1)));
+            rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                detail = mapPayrollDetail(rs);
+            }
+
+            return detail;
+
+        } catch (Exception e) {
+            throw new SQLException(e);
+        } finally {
+            ConnectionHelper.close(rs);
+            ConnectionHelper.close(pstmt);
+        }
     }
 
 }

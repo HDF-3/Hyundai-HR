@@ -115,57 +115,101 @@ public class PayrollService {
     }
 
     public boolean addAdditionalAllowance(AdditionalAllowanceDTO additionalAllowance) {
-        int rowcount = additionalAllowanceDAO.insertAdditionalAllowance(additionalAllowance);
+        Connection conn = null;
 
-        if (rowcount > 0) {
-            refreshAdditionalAllowanceTotal(
-                    additionalAllowance.getEmployeeId(),
-                    additionalAllowance.getAdditionalAllowanceYearMonth()
-            );
-        }
+        try {
+            conn = openTransaction();
+            int rowcount = additionalAllowanceDAO.insertAdditionalAllowance(additionalAllowance, conn);
 
-        return rowcount > 0;
-    }
-
-    public boolean updateAdditionalAllowance(AdditionalAllowanceDTO additionalAllowance) {
-        AdditionalAllowanceDTO beforeUpdate = additionalAllowanceDAO.findAdditionalAllowance(
-                additionalAllowance.getAdditionalAllowanceId()
-        );
-        int rowcount = additionalAllowanceDAO.updateAdditionalAllowance(additionalAllowance);
-
-        if (rowcount > 0) {
-            if (beforeUpdate != null) {
+            if (rowcount > 0) {
                 refreshAdditionalAllowanceTotal(
-                        beforeUpdate.getEmployeeId(),
-                        beforeUpdate.getAdditionalAllowanceYearMonth()
+                        additionalAllowance.getEmployeeId(),
+                        additionalAllowance.getAdditionalAllowanceYearMonth(),
+                        conn
                 );
             }
 
-            refreshAdditionalAllowanceTotal(
-                    additionalAllowance.getEmployeeId(),
-                    additionalAllowance.getAdditionalAllowanceYearMonth()
-            );
-        }
+            conn.commit();
+            return rowcount > 0;
 
-        return rowcount > 0;
+        } catch (Exception e) {
+            rollback(conn);
+            throw new RuntimeException("Failed to add additional allowance.", e);
+        } finally {
+            ConnectionHelper.close(conn);
+        }
+    }
+
+    public boolean updateAdditionalAllowance(AdditionalAllowanceDTO additionalAllowance) {
+        Connection conn = null;
+
+        try {
+            conn = openTransaction();
+            AdditionalAllowanceDTO beforeUpdate = additionalAllowanceDAO.findAdditionalAllowance(
+                    additionalAllowance.getAdditionalAllowanceId(),
+                    conn
+            );
+            int rowcount = additionalAllowanceDAO.updateAdditionalAllowance(additionalAllowance, conn);
+
+            if (rowcount > 0) {
+                if (beforeUpdate != null) {
+                    refreshAdditionalAllowanceTotal(
+                            beforeUpdate.getEmployeeId(),
+                            beforeUpdate.getAdditionalAllowanceYearMonth(),
+                            conn
+                    );
+                }
+
+                refreshAdditionalAllowanceTotal(
+                        additionalAllowance.getEmployeeId(),
+                        additionalAllowance.getAdditionalAllowanceYearMonth(),
+                        conn
+                );
+            }
+
+            conn.commit();
+            return rowcount > 0;
+
+        } catch (Exception e) {
+            rollback(conn);
+            throw new RuntimeException("Failed to update additional allowance.", e);
+        } finally {
+            ConnectionHelper.close(conn);
+        }
     }
 
     public boolean deleteAdditionalAllowance(Long additionalAllowanceId) {
-        AdditionalAllowanceDTO additionalAllowance = additionalAllowanceDAO.findAdditionalAllowance(additionalAllowanceId);
-        int rowcount = additionalAllowanceDAO.deleteAdditionalAllowance(additionalAllowanceId);
+        Connection conn = null;
 
-        if (rowcount > 0 && additionalAllowance != null) {
-            refreshAdditionalAllowanceTotal(
-                    additionalAllowance.getEmployeeId(),
-                    additionalAllowance.getAdditionalAllowanceYearMonth()
+        try {
+            conn = openTransaction();
+            AdditionalAllowanceDTO additionalAllowance = additionalAllowanceDAO.findAdditionalAllowance(
+                    additionalAllowanceId,
+                    conn
             );
-        }
+            int rowcount = additionalAllowanceDAO.deleteAdditionalAllowance(additionalAllowanceId, conn);
 
-        return rowcount > 0;
+            if (rowcount > 0 && additionalAllowance != null) {
+                refreshAdditionalAllowanceTotal(
+                        additionalAllowance.getEmployeeId(),
+                        additionalAllowance.getAdditionalAllowanceYearMonth(),
+                        conn
+                );
+            }
+
+            conn.commit();
+            return rowcount > 0;
+
+        } catch (Exception e) {
+            rollback(conn);
+            throw new RuntimeException("Failed to delete additional allowance.", e);
+        } finally {
+            ConnectionHelper.close(conn);
+        }
     }
 
-    private void refreshAdditionalAllowanceTotal(Long employeeId, YearMonth yearMonth) {
-        PayrollDetailDTO payrollDetail = payrollDetailDAO.findPayrollDetail(employeeId, yearMonth);
+    private void refreshAdditionalAllowanceTotal(Long employeeId, YearMonth yearMonth, Connection conn) throws Exception {
+        PayrollDetailDTO payrollDetail = payrollDetailDAO.findPayrollDetail(employeeId, yearMonth, conn);
 
         if (payrollDetail == null) {
             return;
@@ -173,13 +217,14 @@ public class PayrollService {
 
         BigDecimal additionalAllowanceTotal = BigDecimal.ZERO;
 
-        for (AdditionalAllowanceDTO allowance : additionalAllowanceDAO.findAdditionalAllowanceList(employeeId, yearMonth)) {
+        for (AdditionalAllowanceDTO allowance : additionalAllowanceDAO.findAdditionalAllowanceList(employeeId, yearMonth, conn)) {
             additionalAllowanceTotal = additionalAllowanceTotal.add(allowance.getAmount());
         }
 
         earningDAO.updateAdditionalAllowance(
                 payrollDetail.getPayrollId(),
-                additionalAllowanceTotal
+                additionalAllowanceTotal,
+                conn
         );
     }
 
