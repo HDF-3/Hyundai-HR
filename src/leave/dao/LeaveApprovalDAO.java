@@ -15,9 +15,10 @@ import java.util.List;
 public class LeaveApprovalDAO {
     public List<LeaveRequestDTO> findPendingRequest(Long adminId) {
         List<LeaveRequestDTO> list = new ArrayList<>();
-        String sql = "select lr.* " +
-                "from LEAVE_REQUEST lr " + "join EMPLOYEE e " +
-                "on lr.EMPLOYEE_ID = e.EMP_ID " +
+        String sql = "select lr.LEAVE_REQUEST_ID, lr.EMPLOYEE_ID, lr.LEAVE_REASON, " +
+                "       lr.START_DATE, lr.END_DATE, lr.LEAVE_TYPE_CODE, lr.REQUEST_STATUS " +
+                "from LEAVE_REQUEST lr " +
+                "join EMPLOYEE e on lr.EMPLOYEE_ID = e.EMP_ID " +
                 "where e.DEPT_ID = (select DEPT_ID from EMPLOYEE where EMP_ID = ?) " +
                 "and lr.REQUEST_STATUS = 'PENDING' " +
                 "order by lr.START_DATE ASC";
