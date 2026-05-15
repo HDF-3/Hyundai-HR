@@ -1,13 +1,11 @@
-package humanresource.DAO;
+package humanresource.dao;
 
 
 import global.types.DBType;
 import global.types.EmploymentStatus;
 import global.utils.ConnectionHelper;
-import humanresource.DTO.EmployeeDTO;
-import humanresource.DTO.EmployeeInfoDTO;
-
-import java.awt.*;
+import humanresource.dto.EmployeeDTO;
+import humanresource.dto.EmployeeInfoDTO;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -17,12 +15,6 @@ import java.util.List;
 
 public class EmployeeDAO {
 
-    //TODO
-    // insertEmployee(EmployeeDTO): Int     [O]
-    // updateEmployee(EmployeeDTO) : int
-    // selectEmployeeById(int) : EmployeeId     [O]
-    // selectAllEmployees() : List<EmployeeDTO>    [O]
-
     public int insertEmployee(EmployeeDTO employeeDTO){
         Connection conn = null;
         PreparedStatement pstmt = null;
@@ -30,7 +22,7 @@ public class EmployeeDAO {
 
         try {
             conn = ConnectionHelper.getConnection(DBType.ORACLE);
-            String sql = "INSERT INTO EMPLOYEE(EMP_ID, DEPT_ID, POSITION_ID, NAME, STATUS_ID, HIRE_DATE, PASSWORD) values(?, ?, ?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO EMPLOYEE(EMP_ID, DEPT_ID, POSITION_ID, NAME, STATUS_ID, HIRE_DATE, PASSWORD, CONTACT, GENDER, EMAIL, ADDRESS, SALARY_ACCOUNT, PAY_GRADE) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             pstmt = conn.prepareStatement(sql);
 
@@ -51,12 +43,19 @@ public class EmployeeDAO {
                 pstmt.setDate(6, java.sql.Date.valueOf(java.time.LocalDate.now()));
             }
 
-            // 비밀번호 설정 (초기 비밀번호는'1234')
             if (employeeDTO.getPassword() != null) {
                 pstmt.setString(7, employeeDTO.getPassword());
             } else {
                 pstmt.setString(7, "1234"); 
             }
+
+            //여기부터는 null가능한 값들
+            pstmt.setString(8, employeeDTO.getContact());
+            pstmt.setString(9, employeeDTO.getGender());
+            pstmt.setString(10, employeeDTO.getEmail());
+            pstmt.setString(11, employeeDTO.getAddress());
+            pstmt.setString(12, employeeDTO.getSalAccount());
+            pstmt.setInt(13, employeeDTO.getPayGrade() == 0 ? 1 : employeeDTO.getPayGrade()); // 기본 호봉 1
 
             rowcount = pstmt.executeUpdate();
 
@@ -106,7 +105,7 @@ public class EmployeeDAO {
             rowcount = pstmt.executeUpdate();
 
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
         } finally {
             ConnectionHelper.close(pstmt);
             ConnectionHelper.close(conn);
@@ -259,7 +258,6 @@ public class EmployeeDAO {
         return info;
     }
 
-    // 전체 사원 목록 조회
     public List<EmployeeInfoDTO> selectAllEmployeeInfoList() {
         List<EmployeeInfoDTO> list = new ArrayList<>();
         Connection conn = null;

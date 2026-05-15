@@ -1,25 +1,25 @@
-package humanresource.Service;
+package humanresource.service;
 
 public class DepartmentService {
-    private final humanresource.DAO.DepartmentDAO departmentDAO;
+    private final humanresource.dao.DepartmentDAO departmentDAO;
 
     public DepartmentService() {
-        this.departmentDAO = new humanresource.DAO.DepartmentDAO();
+        this.departmentDAO = new humanresource.dao.DepartmentDAO();
     }
 
-    public int registerDepartment(humanresource.DTO.DepartmentDTO departmentDTO) {
+    public int registerDepartment(humanresource.dto.DepartmentDTO departmentDTO) {
         return departmentDAO.insertDepartment(departmentDTO);
     }
 
     public int removeDepartment(Long deptId) {
-        int employeeCount = departmentDAO.countEmployeesInDept(deptId);
-        if (employeeCount > 0) {
+        int employeeCount = getEmployeeCount(deptId);
+               if (employeeCount > 0) {
             throw new IllegalStateException("부서에 소속된 직원이 존재하여 삭제할 수 없습니다. (직원 수: " + employeeCount + ")");
         }
         return departmentDAO.deleteDepartment(deptId);
     }
 
-    public java.util.List<humanresource.DTO.DepartmentDTO> getAllDepartments() {
+    public java.util.List<humanresource.dto.DepartmentDTO> getAllDepartments() {
         return departmentDAO.selectAllDepartment();
     }
 

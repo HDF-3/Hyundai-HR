@@ -1,9 +1,8 @@
-package humanresource.DAO;
+package humanresource.dao;
 
 import global.types.DBType;
 import global.utils.ConnectionHelper;
-import humanresource.DTO.DepartmentDTO;
-import jdk.jshell.spi.SPIResolutionException;
+import humanresource.dto.DepartmentDTO;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -19,11 +18,29 @@ public class DepartmentDAO {
 
         try{
             conn = ConnectionHelper.getConnection(DBType.ORACLE);
-            String sql = "INSERT INTO DEPARTMENT(DEPT_ID, DEPT_NAME) VALUES(?, ?)";
+            String sql = "INSERT INTO DEPARTMENT(DEPT_ID, DEPT_NAME, DEPT_DESC, MANAGER_ID, PARENT_DEPT_ID) VALUES(?, ?, ?, ?, ?)";
 
             pstmt = conn.prepareStatement(sql);
             pstmt.setLong(1, departmentDTO.getDeptId());
             pstmt.setString(2, departmentDTO.getDeptName());
+
+            if(departmentDTO.getDeptDesc() != null) {
+                pstmt.setString(3, departmentDTO.getDeptDesc());
+            } else {
+                pstmt.setNull(3, java.sql.Types.VARCHAR);
+            }
+
+            if(departmentDTO.getManagerId() != null && departmentDTO.getManagerId() > 0) {
+                pstmt.setLong(4, departmentDTO.getManagerId());
+            } else {
+                pstmt.setNull(4, java.sql.Types.NUMERIC);
+            }
+
+            if(departmentDTO.getParentDeptId() != null && departmentDTO.getParentDeptId() > 0) {
+                pstmt.setLong(5, departmentDTO.getParentDeptId());
+            } else {
+                pstmt.setNull(5, java.sql.Types.NUMERIC);
+            }
 
             rowcount = pstmt.executeUpdate();
         } catch (Exception e) {
@@ -77,8 +94,12 @@ public class DepartmentDAO {
                 dept.setDeptId(rs.getLong("DEPT_ID"));
                 dept.setDeptName(rs.getString("DEPT_NAME"));
                 dept.setDeptDesc(rs.getString("DEPT_DESC"));
-                dept.setManagerId(rs.getLong("MANAGER_ID"));
-                dept.setParentDeptId(rs.getLong("PARENT_DEPT_ID"));
+                
+                long managerId = rs.getLong("MANAGER_ID");
+                if (!rs.wasNull()) dept.setManagerId(managerId);
+                
+                long parentDeptId = rs.getLong("PARENT_DEPT_ID");
+                if (!rs.wasNull()) dept.setParentDeptId(parentDeptId);
 
                 deptList.add(dept);
             }

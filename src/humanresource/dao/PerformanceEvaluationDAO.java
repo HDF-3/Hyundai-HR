@@ -1,8 +1,8 @@
-package humanresource.DAO;
+package humanresource.dao;
 
 import global.types.DBType;
 import global.utils.ConnectionHelper;
-import humanresource.DTO.PerformanceEvaluationDTO;
+import humanresource.dto.PerformanceEvaluationDTO;
 import global.types.PerformanceGrade;
 
 import java.sql.Connection;
@@ -25,8 +25,15 @@ public class PerformanceEvaluationDAO {
             pstmt = conn.prepareStatement(sql);
             pstmt.setLong(1, dto.getTargetEmpId());
             pstmt.setString(2, dto.getEvaluationYear());
-            pstmt.setInt(3, dto.getEvaluationQuarter());
-            pstmt.setString(4, dto.getPerformanceGrade().name()); // Enum 이름을 문자열로 저장
+
+            if(dto.getEvaluationQuarter() != null) {
+                pstmt.setLong(3, dto.getEvaluationQuarter());
+            } else {
+                pstmt.setNull(3, java.sql.Types.NUMERIC);
+            }
+            
+
+            pstmt.setInt(4, dto.getPerformanceGrade().getCode()); 
 
             rowcount = pstmt.executeUpdate();
         } catch (Exception e) {
@@ -58,10 +65,14 @@ public class PerformanceEvaluationDAO {
                 dto.setEvaluationId(rs.getLong("EVALUATION_ID"));
                 dto.setTargetEmpId(rs.getLong("TARGET_EMP_ID"));
                 dto.setEvaluationYear(rs.getString("EVAL_YEAR"));
-                dto.setEvaluationQuarter(rs.getInt("EVAL_QUARTER"));
+                
+                long quarter = rs.getLong("EVAL_QUARTER");
+                if(!rs.wasNull()) {
+                    dto.setEvaluationQuarter(quarter);
+                }
 
-                String gradeStr = rs.getString("GRADE");
-                dto.setPerformanceGrade(PerformanceGrade.valueOf(gradeStr));
+                int gradeCode = rs.getInt("GRADE");
+                dto.setPerformanceGrade(PerformanceGrade.fromCode(gradeCode));
 
                 dtoList.add(dto);
             }

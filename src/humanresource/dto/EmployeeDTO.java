@@ -1,4 +1,4 @@
-package humanresource.DTO;
+package humanresource.dto;
 
 
 import lombok.Getter;

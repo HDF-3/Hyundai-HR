@@ -1,4 +1,4 @@
-package humanresource.DTO;
+package humanresource.dto;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,6 +14,6 @@ public class DepartmentDTO {
     private String deptName;
     private String deptDesc;
     private Long managerId;
-    private Long ParentDeptId;
+    private Long parentDeptId;
 
 }

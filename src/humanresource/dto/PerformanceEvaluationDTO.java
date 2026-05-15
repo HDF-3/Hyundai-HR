@@ -1,4 +1,4 @@
-package humanresource.DTO;
+package humanresource.dto;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,6 +13,6 @@ public class PerformanceEvaluationDTO {
     private Long evaluationId;
     private Long targetEmpId;
     private String evaluationYear;
-    private int evaluationQuarter;
+    private Long evaluationQuarter;
     private global.types.PerformanceGrade performanceGrade;
 }
