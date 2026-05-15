@@ -1,7 +1,7 @@
 package global.types;
 
 public enum CommonStatus {
-	PENGDING,
+	PENDING,
 	APPROVED,
 	REJECTED,
 	CANCELED,
