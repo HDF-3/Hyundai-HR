@@ -1,7 +1,7 @@
-package humanresource.Service;
+package humanresource.service;
 
-import humanresource.DTO.EmployeeDTO;
-import humanresource.DTO.EmployeeInfoDTO;
+import humanresource.dto.EmployeeDTO;
+import humanresource.dto.EmployeeInfoDTO;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -9,17 +9,19 @@ import java.util.List;
 public class EmployeeService {
 
 
-    private final humanresource.DAO.EmployeeDAO employeeDAO;
+    private final humanresource.dao.EmployeeDAO employeeDAO;
 
     public EmployeeService(){
-        this.employeeDAO = new humanresource.DAO.EmployeeDAO();
+        this.employeeDAO = new humanresource.dao.EmployeeDAO();
     }
 
     public List<EmployeeDTO> getAllEmployees(){
         return employeeDAO.selectAllEmployees();
     }
 
-    public boolean registerEmployee(humanresource.DTO.EmployeeDTO employeeDTO){
+    public boolean registerEmployee(humanresource.dto.EmployeeDTO employeeDTO){
+        String rawPassword = employeeDTO.getPassword();
+        employeeDTO.setPassword(global.utils.PasswordUtils.encrypt(rawPassword));
         return employeeDAO.insertEmployee(employeeDTO) > 0;
     }
 
@@ -27,7 +29,7 @@ public class EmployeeService {
         return employeeDAO.selectEmployeeById(empId);
     }
 
-    public boolean modifyEmployeeInfo(humanresource.DTO.EmployeeDTO employeeDTO){
+    public boolean modifyEmployeeInfo(humanresource.dto.EmployeeDTO employeeDTO){
         return employeeDAO.updateEmployee(employeeDTO) > 0;
     }
 
@@ -74,5 +76,25 @@ public class EmployeeService {
         return employeeDAO.selectAllEmployeeInfoList();
     }
 
+    public EmployeeDTO authenticate(Long empId, String rawPassword) {
+        EmployeeDTO emp = employeeDAO.selectEmployeeById(empId);
 
+
+        if (emp != null) {
+            String encryptedInput = global.utils.PasswordUtils.encrypt(rawPassword);
+            if (encryptedInput.equals(emp.getPassword())) {
+                return emp;
+            }
+        }
+        return null;
+    }
+
+    public boolean updateAdminRole(Long empId, String isAdminFlag) {
+        EmployeeDTO emp = employeeDAO.selectEmployeeById(empId);
+        if (emp == null) return false;
+
+        boolean isAdmin = isAdminFlag != null && (isAdminFlag.equalsIgnoreCase("Y") || isAdminFlag.equalsIgnoreCase("true"));
+        emp.setIsAdmin(isAdmin);
+        return employeeDAO.updateEmployee(emp) > 0;
+    }
 }
