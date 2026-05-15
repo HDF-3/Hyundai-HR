@@ -59,6 +59,35 @@ public class AdditionalAllowanceDAO {
         return additionalAllowanceList;
     }
 
+    public AdditionalAllowanceDTO findAdditionalAllowance(Long additionalAllowanceId) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        AdditionalAllowanceDTO additionalAllowance = null;
+
+        try {
+            conn = ConnectionHelper.getConnection(DBType.ORACLE);
+            String sql = "select additional_allowance_id, employee_id, additional_allowance_name, allowance_year_month, amount from additional_allowance where additional_allowance_id=?";
+
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setLong(1, additionalAllowanceId);
+            rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                additionalAllowance = mapAdditionalAllowance(rs);
+            }
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        } finally {
+            ConnectionHelper.close(rs);
+            ConnectionHelper.close(pstmt);
+            ConnectionHelper.close(conn);
+        }
+
+        return additionalAllowance;
+    }
+
     public int insertAdditionalAllowance(AdditionalAllowanceDTO additionalAllowance) {
         Connection conn = null;
         PreparedStatement pstmt = null;
@@ -140,4 +169,5 @@ public class AdditionalAllowanceDAO {
 
         return rowcount;
     }
+
 }

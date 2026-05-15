@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Date;
+import java.sql.SQLException;
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,11 +26,24 @@ public class PayrollDAO {
         payroll.setTotalEarnings(rs.getBigDecimal("total_earnings"));
         payroll.setTotalDeductions(rs.getBigDecimal("total_deductions"));
         payroll.setNetPay(rs.getBigDecimal("net_pay"));
-        payroll.setConfirmedAt(rs.getDate("confirmed_at").toLocalDate());
-        payroll.setPayDate(rs.getDate("pay_date").toLocalDate());
+
+        Date confirmedAt = rs.getDate("confirmed_at");
+        Date payDate = rs.getDate("pay_date");
+
+        payroll.setConfirmedAt(confirmedAt == null ? null : confirmedAt.toLocalDate());
+        payroll.setPayDate(payDate == null ? null : payDate.toLocalDate());
         payroll.setStatus(CommonStatus.valueOf(rs.getString("status")));
 
         return payroll;
+    }
+
+    private void setNullableDate(PreparedStatement pstmt, int parameterIndex, LocalDate date) throws SQLException {
+        if (date == null) {
+            pstmt.setDate(parameterIndex, null);
+            return;
+        }
+
+        pstmt.setDate(parameterIndex, Date.valueOf(date));
     }
 
    
@@ -136,8 +151,8 @@ public class PayrollDAO {
             pstmt.setBigDecimal(4, payroll.getTotalEarnings());
             pstmt.setBigDecimal(5, payroll.getTotalDeductions());
             pstmt.setBigDecimal(6, payroll.getNetPay());
-            pstmt.setDate(7, Date.valueOf(payroll.getConfirmedAt()));
-            pstmt.setDate(8, Date.valueOf(payroll.getPayDate()));
+            setNullableDate(pstmt, 7, payroll.getConfirmedAt());
+            setNullableDate(pstmt, 8, payroll.getPayDate());
             pstmt.setString(9, payroll.getStatus().name());
 
             rowcount = pstmt.executeUpdate();
@@ -168,10 +183,101 @@ public class PayrollDAO {
             pstmt.setBigDecimal(3, payroll.getTotalEarnings());
             pstmt.setBigDecimal(4, payroll.getTotalDeductions());
             pstmt.setBigDecimal(5, payroll.getNetPay());
-            pstmt.setDate(6, Date.valueOf(payroll.getConfirmedAt()));
-            pstmt.setDate(7, Date.valueOf(payroll.getPayDate()));
+            setNullableDate(pstmt, 6, payroll.getConfirmedAt());
+            setNullableDate(pstmt, 7, payroll.getPayDate());
             pstmt.setString(8, payroll.getStatus().name());
             pstmt.setLong(9, payroll.getPayrollId());
+
+            rowcount = pstmt.executeUpdate();
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        } finally {
+            ConnectionHelper.close(pstmt);
+            ConnectionHelper.close(conn);
+        }
+
+        return rowcount;
+    }
+    
+    public int updatePayrollStatusByMonth(YearMonth yearMonth, CommonStatus status) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        int rowcount = 0;
+
+        try {
+            conn = ConnectionHelper.getConnection(DBType.ORACLE);
+            String sql = "update payroll set status=? where payroll_year_month=?";
+
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, status.name());
+            pstmt.setDate(2, Date.valueOf(yearMonth.atDay(1)));
+
+            rowcount = pstmt.executeUpdate();
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        } finally {
+            ConnectionHelper.close(pstmt);
+            ConnectionHelper.close(conn);
+        }
+
+        return rowcount;
+    }
+
+    public int updatePayrollStatus(Long payrollId, CommonStatus status) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        int rowcount = 0;
+
+        try {
+            conn = ConnectionHelper.getConnection(DBType.ORACLE);
+            String sql = "update payroll set status=? where payroll_id=?";
+
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, status.name());
+            pstmt.setLong(2, payrollId);
+
+            rowcount = pstmt.executeUpdate();
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        } finally {
+            ConnectionHelper.close(pstmt);
+            ConnectionHelper.close(conn);
+        }
+
+        return rowcount;
+    }
+
+    public int refreshPayrollTotal(Long payrollId) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        int rowcount = 0;
+
+        try {
+            conn = ConnectionHelper.getConnection(DBType.ORACLE);
+            String sql = "update payroll p "
+                    + "set (total_earnings, total_deductions, net_pay) = ( "
+                    + "    select "
+                    + "        e.base_salary + e.overtime_pay + e.transportation_allowance + e.performance_bonus + e.additional_allowance, "
+                    + "        d.national_pension + d.health_insurance + d.long_term_care_insurance + d.employment_insurance + d.income_tax + d.local_income_tax, "
+                    + "        (e.base_salary + e.overtime_pay + e.transportation_allowance + e.performance_bonus + e.additional_allowance) "
+                    + "        - (d.national_pension + d.health_insurance + d.long_term_care_insurance + d.employment_insurance + d.income_tax + d.local_income_tax) "
+                    + "    from earning e "
+                    + "    join deduction d on d.payroll_id = e.payroll_id "
+                    + "    where e.payroll_id = p.payroll_id "
+                    + ") "
+                    + "where p.payroll_id=? "
+                    + "and exists ( "
+                    + "    select 1 "
+                    + "    from earning e "
+                    + "    join deduction d on d.payroll_id = e.payroll_id "
+                    + "    where e.payroll_id = p.payroll_id "
+                    + ")";
+
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setLong(1, payrollId);
 
             rowcount = pstmt.executeUpdate();
 
@@ -208,4 +314,5 @@ public class PayrollDAO {
 
         return rowcount;
     }
+
 }

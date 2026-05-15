@@ -3,6 +3,7 @@ package payroll.dao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.math.BigDecimal;
 
 import global.types.DBType;
 import global.utils.ConnectionHelper;
@@ -72,6 +73,31 @@ public class EarningDAO {
             pstmt.setBigDecimal(4, earningDTO.getPerformanceBonus());
             pstmt.setBigDecimal(5, earningDTO.getAdditionalAllowance());
             pstmt.setLong(6, earningDTO.getEarningId());
+
+            rowcount = pstmt.executeUpdate();
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        } finally {
+            ConnectionHelper.close(pstmt);
+            ConnectionHelper.close(conn);
+        }
+
+        return rowcount;
+    }
+
+    public int updateAdditionalAllowance(Long payrollId, BigDecimal additionalAllowance) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        int rowcount = 0;
+
+        try {
+            conn = ConnectionHelper.getConnection(DBType.ORACLE);
+            String sql = "update earning set additional_allowance=? where payroll_id=?";
+
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setBigDecimal(1, additionalAllowance);
+            pstmt.setLong(2, payrollId);
 
             rowcount = pstmt.executeUpdate();
 
