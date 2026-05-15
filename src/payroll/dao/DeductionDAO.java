@@ -3,6 +3,7 @@ package payroll.dao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 
 import global.types.DBType;
 import global.utils.ConnectionHelper;
@@ -86,13 +87,10 @@ public class DeductionDAO {
         return rowcount;
     }
 
-    public int updateDeduction(DeductionDTO deductionDTO) {
-        Connection conn = null;
+    public int updateDeduction(DeductionDTO deductionDTO, Connection conn) throws SQLException {
         PreparedStatement pstmt = null;
-        int rowcount = 0;
 
         try {
-            conn = ConnectionHelper.getConnection(DBType.ORACLE);
             String sql = "update deduction set national_pension=?, health_insurance=?, long_term_care_insurance=?, employment_insurance=?, income_tax=?, local_income_tax=? where deduction_id=?";
 
             pstmt = conn.prepareStatement(sql);
@@ -105,39 +103,26 @@ public class DeductionDAO {
             pstmt.setBigDecimal(6, deductionDTO.getLocalIncomeTax());
             pstmt.setLong(7, deductionDTO.getDeductionId());
 
-            rowcount = pstmt.executeUpdate();
+            return pstmt.executeUpdate();
 
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
         } finally {
             ConnectionHelper.close(pstmt);
-            ConnectionHelper.close(conn);
         }
-
-        return rowcount;
     }
 
-    public int deleteDeduction(Long payrollId) {
-        Connection conn = null;
+    public int deleteDeduction(Long payrollId, Connection conn) throws SQLException {
         PreparedStatement pstmt = null;
-        int rowcount = 0;
 
         try {
-            conn = ConnectionHelper.getConnection(DBType.ORACLE);
             String sql = "delete from deduction where payroll_id=?";
 
             pstmt = conn.prepareStatement(sql);
             pstmt.setLong(1, payrollId);
 
-            rowcount = pstmt.executeUpdate();
+            return pstmt.executeUpdate();
 
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
         } finally {
             ConnectionHelper.close(pstmt);
-            ConnectionHelper.close(conn);
         }
-
-        return rowcount;
     }
 }

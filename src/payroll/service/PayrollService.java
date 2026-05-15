@@ -1,10 +1,13 @@
 package payroll.service;
 
 import java.math.BigDecimal;
+import java.sql.Connection;
 import java.time.YearMonth;
 import java.util.List;
 
 import global.types.CommonStatus;
+import global.types.DBType;
+import global.utils.ConnectionHelper;
 import payroll.dao.AdditionalAllowanceDAO;
 import payroll.dao.DeductionDAO;
 import payroll.dao.EarningDAO;
@@ -43,7 +46,24 @@ public class PayrollService {
     }
 
     public boolean deletePayroll(Long payrollId) {
-        return payrollDAO.deletePayroll(payrollId) > 0;
+        Connection conn = null;
+
+        try {
+            conn = openTransaction();
+
+            deductionDAO.deleteDeduction(payrollId, conn);
+            earningDAO.deleteEarning(payrollId, conn);
+            int rowcount = payrollDAO.deletePayroll(payrollId, conn);
+
+            conn.commit();
+            return rowcount > 0;
+
+        } catch (Exception e) {
+            rollback(conn);
+            throw new RuntimeException("Failed to delete payroll.", e);
+        } finally {
+            ConnectionHelper.close(conn);
+        }
     }
 
     public boolean confirmPayroll(YearMonth yearMonth) {
@@ -55,11 +75,39 @@ public class PayrollService {
     }
 
     public boolean updateEarning(EarningDTO earning) {
-        return earningDAO.updateEarning(earning) > 0;
+        Connection conn = null;
+
+        try {
+            conn = openTransaction();
+            int rowcount = earningDAO.updateEarning(earning, conn);
+
+            conn.commit();
+            return rowcount > 0;
+
+        } catch (Exception e) {
+            rollback(conn);
+            throw new RuntimeException("Failed to update earning.", e);
+        } finally {
+            ConnectionHelper.close(conn);
+        }
     }
 
     public boolean updateDeduction(DeductionDTO deduction) {
-        return deductionDAO.updateDeduction(deduction) > 0;
+        Connection conn = null;
+
+        try {
+            conn = openTransaction();
+            int rowcount = deductionDAO.updateDeduction(deduction, conn);
+
+            conn.commit();
+            return rowcount > 0;
+
+        } catch (Exception e) {
+            rollback(conn);
+            throw new RuntimeException("Failed to update deduction.", e);
+        } finally {
+            ConnectionHelper.close(conn);
+        }
     }
 
     public List<AdditionalAllowanceDTO> getAdditionalAllowanceList(Long employeeId, YearMonth yearMonth) {
@@ -133,5 +181,28 @@ public class PayrollService {
                 payrollDetail.getPayrollId(),
                 additionalAllowanceTotal
         );
+    }
+
+    private Connection openTransaction() throws Exception {
+        Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
+
+        if (conn == null) {
+            throw new IllegalStateException("Database connection is null.");
+        }
+
+        conn.setAutoCommit(false);
+        return conn;
+    }
+
+    private void rollback(Connection conn) {
+        if (conn == null) {
+            return;
+        }
+
+        try {
+            conn.rollback();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
     }
 }

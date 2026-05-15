@@ -3,6 +3,7 @@ package payroll.dao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.math.BigDecimal;
 
 import global.types.DBType;
@@ -56,13 +57,10 @@ public class EarningDAO {
         return rowcount;
     }
 
-    public int updateEarning(EarningDTO earningDTO) {
-        Connection conn = null;
+    public int updateEarning(EarningDTO earningDTO, Connection conn) throws SQLException {
         PreparedStatement pstmt = null;
-        int rowcount = 0;
 
         try {
-            conn = ConnectionHelper.getConnection(DBType.ORACLE);
             String sql = "update earning set base_salary=?, overtime_pay=?, transportation_allowance=?, performance_bonus=?, additional_allowance=? where earning_id=?";
 
             pstmt = conn.prepareStatement(sql);
@@ -74,16 +72,11 @@ public class EarningDAO {
             pstmt.setBigDecimal(5, earningDTO.getAdditionalAllowance());
             pstmt.setLong(6, earningDTO.getEarningId());
 
-            rowcount = pstmt.executeUpdate();
+            return pstmt.executeUpdate();
 
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
         } finally {
             ConnectionHelper.close(pstmt);
-            ConnectionHelper.close(conn);
         }
-
-        return rowcount;
     }
 
     public int updateAdditionalAllowance(Long payrollId, BigDecimal additionalAllowance) {
@@ -140,27 +133,19 @@ public class EarningDAO {
         return earning;
     }
 
-    public int deleteEarning(Long payrollId) {
-        Connection conn = null;
+    public int deleteEarning(Long payrollId, Connection conn) throws SQLException {
         PreparedStatement pstmt = null;
-        int rowcount = 0;
 
         try {
-            conn = ConnectionHelper.getConnection(DBType.ORACLE);
             String sql = "delete from earning where payroll_id=?";
 
             pstmt = conn.prepareStatement(sql);
             pstmt.setLong(1, payrollId);
 
-            rowcount = pstmt.executeUpdate();
+            return pstmt.executeUpdate();
 
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
         } finally {
             ConnectionHelper.close(pstmt);
-            ConnectionHelper.close(conn);
         }
-
-        return rowcount;
     }
 }

@@ -291,28 +291,20 @@ public class PayrollDAO {
         return rowcount;
     }
 
-    public int deletePayroll(Long payrollId) {
-        Connection conn = null;
+    public int deletePayroll(Long payrollId, Connection conn) throws SQLException {
         PreparedStatement pstmt = null;
-        int rowcount = 0;
 
         try {
-            conn = ConnectionHelper.getConnection(DBType.ORACLE);
             String sql = "delete from payroll where payroll_id=?";
 
             pstmt = conn.prepareStatement(sql);
             pstmt.setLong(1, payrollId);
 
-            rowcount = pstmt.executeUpdate();
+            return pstmt.executeUpdate();
 
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
         } finally {
             ConnectionHelper.close(pstmt);
-            ConnectionHelper.close(conn);
         }
-
-        return rowcount;
     }
 
 }
