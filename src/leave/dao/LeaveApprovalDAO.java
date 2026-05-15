@@ -18,7 +18,7 @@ public class LeaveApprovalDAO {
         String sql = "select lr.* " +
                 "from LEAVE_REQUEST lr " + "join EMPLOYEE e " +
                 "on lr.EMPLOYEE_ID = e.EMP_ID " +
-                "where e.DEPT_ID = (SELECT DEPT_ID FROM EMPLOYEE WHERE EMP_ID = ?) " +
+                "where e.DEPT_ID = (select DEPT_ID from EMPLOYEE where EMP_ID = ?) " +
                 "and lr.REQUEST_STATUS = 'PENDING' " +
                 "order by lr.START_DATE ASC";
         try (
@@ -47,7 +47,7 @@ public class LeaveApprovalDAO {
     }
 
     public boolean updateLeaveRequestStatus(Long leaveRequestId, CommonStatus status) {
-        String sql = "update LEAVE_REQUEST SET REQUEST_STATUS = ? WHERE LEAVE_REQUEST_ID = ?";
+        String sql = "update LEAVE_REQUEST set REQUEST_STATUS = ? where LEAVE_REQUEST_ID = ?";
 
         try (
                 Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
@@ -55,6 +55,24 @@ public class LeaveApprovalDAO {
                 ){
             pstmt.setString(1, status.toString());
             pstmt.setLong(2, leaveRequestId);
+
+            return pstmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    public boolean deductAnnualLeave(Long empId, double deductionDays) {
+        String sql = "update ANNUAL_LEAVE " +
+                "set USED_ANNUAL_LEAVE = USED_ANNUAL_LEAVE + ? " +
+                "where EMP_ID = ? and IS_ACTIVE = 'Y'";
+
+        try (
+                Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
+                PreparedStatement pstmt = conn.prepareStatement(sql)
+                ) {
+            pstmt.setDouble(1, deductionDays);
+            pstmt.setLong(2, empId);
 
             return pstmt.executeUpdate() > 0;
         } catch (Exception e) {
