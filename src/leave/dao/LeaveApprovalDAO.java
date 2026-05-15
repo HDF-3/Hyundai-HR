@@ -77,7 +77,7 @@ public class LeaveApprovalDAO {
         String sql = "update LEAVE_REQUEST set REQUEST_STATUS = ? where LEAVE_REQUEST_ID = ?";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)){
-            pstmt.setString(1, status.toString());
+            pstmt.setString(1, status.name());
             pstmt.setLong(2, leaveRequestId);
 
             return pstmt.executeUpdate() > 0;
