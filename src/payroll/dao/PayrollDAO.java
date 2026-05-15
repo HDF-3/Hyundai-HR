@@ -39,7 +39,7 @@ public class PayrollDAO {
 
     private void setNullableDate(PreparedStatement pstmt, int parameterIndex, LocalDate date) throws SQLException {
         if (date == null) {
-            pstmt.setDate(parameterIndex, null);
+            pstmt.setNull(parameterIndex, java.sql.Types.DATE);
             return;
         }
 
