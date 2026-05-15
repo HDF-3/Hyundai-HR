@@ -3,12 +3,11 @@ package leave.dao;
 import global.types.DBType;
 import global.utils.ConnectionHelper;
 import leave.dto.AnnualLeaveDTO;
+import leave.dto.LeaveRequestDTO;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class LeaveDAO {
     public List<AnnualLeaveDTO> findAnnualLeaveListByEmployeeId(Long employeeId) {
@@ -67,5 +66,28 @@ public class LeaveDAO {
             e.printStackTrace();
         }
         return dto;
+    }
+    public boolean insertLeaveRequest(LeaveRequestDTO dto) {
+        String sql = "insert into LEAVE_REQUEST (LEAVE_REQUEST_ID, EMPLOYEE_ID, LEAVE_REASON, " +
+                "START_DATE, END_DATE, LEAVE_TYPE_CODE, REQUEST_STATUS) " +
+                "values (SEQ_LEAVE_REQUEST_ID.NEXTVAL, ?, ?, ?, ?, ?, ?)";
+        try (
+                Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
+                PreparedStatement pstmt = conn.prepareStatement(sql);
+        ){
+            pstmt.setLong(1, dto.getEmployeeId());
+            pstmt.setString(2, dto.getReason());
+            // LocalDate를 java.sql.Date로 변환
+            pstmt.setDate(3, Date.valueOf(dto.getStartDate()));
+            pstmt.setDate(4, Date.valueOf(dto.getEndDate()));
+            // Enum을 문자열 코드로 저장
+            pstmt.setString(5, dto.getLeaveType().name());
+            pstmt.setString(6, dto.getStatus().name());
+            return pstmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+
     }
 }

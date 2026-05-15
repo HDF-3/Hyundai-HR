@@ -19,5 +19,4 @@ public class LeaveRequestDTO {
     private LocalDate endDate;
     private LeaveType leaveType;
     private CommonStatus status;
-
 }
