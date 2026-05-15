@@ -8,6 +8,7 @@ import leave.dto.AnnualLeaveDTO;
 import leave.dto.LeaveRequestDTO;
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -138,5 +139,30 @@ public class LeaveDAO {
             e.printStackTrace();
             return false;
         }
+    }
+    public boolean isDuplicateLeaveRequest(Long employeeId, LocalDate newStart, LocalDate newEnd) {
+        String sql = "select COUNT(*) from LEAVE_REQUEST " +
+                "where EMPLOYEE_ID = ? " +
+                "and REQUEST_STATUS in ('PENDING', 'APPROVED') " +
+                "and START_DATE <= ? " +
+                "and END_DATE >= ?";
+
+        try (
+                Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
+                PreparedStatement pstmt = conn.prepareStatement(sql);
+        ) {
+            pstmt.setLong(1, employeeId);
+            pstmt.setDate(2, Date.valueOf(newEnd));
+            pstmt.setDate(3, Date.valueOf(newStart));
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }
