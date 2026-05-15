@@ -212,7 +212,6 @@ public class EmployeeDAO {
     }
 
 
-    // 사원 상세 정보 조회
     public EmployeeInfoDTO selectEmployeeInfoDetail(Long empId) {
         Connection conn = null;
         PreparedStatement pstmt = null;

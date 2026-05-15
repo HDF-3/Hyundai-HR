@@ -2,6 +2,7 @@ package humanresource.service;
 
 import humanresource.dto.EmployeeDTO;
 import humanresource.dto.EmployeeInfoDTO;
+import humanresource.dto.AssignmentHistoryDTO;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -10,9 +11,11 @@ public class EmployeeService {
 
 
     private final humanresource.dao.EmployeeDAO employeeDAO;
+    private final humanresource.dao.AssignmentHistoryDAO assignmentHistoryDAO;
 
     public EmployeeService(){
         this.employeeDAO = new humanresource.dao.EmployeeDAO();
+        this.assignmentHistoryDAO = new humanresource.dao.AssignmentHistoryDAO();
     }
 
     public List<EmployeeDTO> getAllEmployees(){
@@ -96,5 +99,9 @@ public class EmployeeService {
         boolean isAdmin = isAdminFlag != null && (isAdminFlag.equalsIgnoreCase("Y") || isAdminFlag.equalsIgnoreCase("true"));
         emp.setIsAdmin(isAdmin);
         return employeeDAO.updateEmployee(emp) > 0;
+    }
+
+    public List<AssignmentHistoryDTO> getAssignmentHistory(Long empId) {
+        return assignmentHistoryDAO.selectHistoryByEmpId(empId);
     }
 }

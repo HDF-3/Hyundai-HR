@@ -1,19 +1,37 @@
 package humanresource.service;
 
+import humanresource.dto.EmployeeDTO;
 import humanresource.dto.PerformanceEvaluationDTO;
+import humanresource.dao.EmployeeDAO;
+import humanresource.dao.PerformanceEvaluationDAO;
 
 import java.util.List;
 
 public class PerformanceEvaluationService {
-    private final humanresource.dao.PerformanceEvaluationDAO performanceEvaluationDAO;
+    private final PerformanceEvaluationDAO performanceEvaluationDAO;
+    private final EmployeeDAO employeeDAO;
 
     public PerformanceEvaluationService() {
-        this.performanceEvaluationDAO = new humanresource.dao.PerformanceEvaluationDAO();
+        this.performanceEvaluationDAO = new PerformanceEvaluationDAO();
+        this.employeeDAO = new EmployeeDAO();
     }
 
+    public boolean registerPerformanceEvaluation(PerformanceEvaluationDTO evalDTO, EmployeeDTO evaluator) throws Exception {
 
-    public boolean registerPerformanceEvaluation(humanresource.dto.PerformanceEvaluationDTO performanceEvaluationDTO) {
-        return performanceEvaluationDAO.insertPerformanceEvaluation(performanceEvaluationDTO) > 0;
+        if (evaluator.getIsAdmin() == null || !evaluator.getIsAdmin()) {
+            throw new IllegalAccessException("인사 고과 등록 권한이 없습니다. (관리자 전용)");
+        }
+
+        EmployeeDTO targetEmp = employeeDAO.selectEmployeeById(evalDTO.getTargetEmpId());
+        if (targetEmp == null) {
+            throw new IllegalArgumentException("평가 대상 직원을 찾을 수 없습니다.");
+        }
+
+        if (!evaluator.getDeptId().equals(targetEmp.getDeptId())) {
+            throw new IllegalAccessException("타 부서 직원의 인사 고과는 등록할 수 없습니다.");
+        }
+
+        return performanceEvaluationDAO.insertPerformanceEvaluation(evalDTO) > 0;
     }
 
     public List<PerformanceEvaluationDTO> getPerformanceEvaluationHistory(Long empId){
