@@ -19,25 +19,29 @@ import global.types.DBType;
 import global.utils.ConnectionHelper;
 
 public class AttendanceModifyDAO {
-	private static final String BASE_SQL = """
-		    SELECT 
-		        acr.attendance_change_request_id AS mod_history_id,
-		        acr.cancel_req_id,
-		        acr.emp_id,
-		        acr.work_date,
-		        acr.STATUS AS req_state,
-		        acr.is_on_work_time_modified,
-		        acr.is_off_work_time_modified,
-		        citc.time_old AS old_clock_in_time,
-		        citc.time_new AS new_clock_in_time,
-		        cotc.time_old AS old_clock_out_time,
-		        cotc.time_new AS new_clock_out_time
-		    FROM attendance_change_request acr
-		    LEFT JOIN clock_in_time_change citc
-		        ON acr.attendance_change_request_id = citc.attendance_change_request_id
-		    LEFT JOIN clock_out_time_change cotc
-		        ON acr.attendance_change_request_id = cotc.attendance_change_request_id
-		""";
+	private static final String BASE_SQL = sql(
+	        "SELECT",
+	        "    acr.attendance_change_request_id AS mod_history_id,",
+	        "    acr.cancel_req_id,",
+	        "    acr.emp_id,",
+	        "    acr.work_date,",
+	        "    acr.STATUS AS req_state,",
+	        "    acr.is_on_work_time_modified,",
+	        "    acr.is_off_work_time_modified,",
+	        "    citc.time_old AS old_clock_in_time,",
+	        "    citc.time_new AS new_clock_in_time,",
+	        "    cotc.time_old AS old_clock_out_time,",
+	        "    cotc.time_new AS new_clock_out_time",
+	        "FROM attendance_change_request acr",
+	        "LEFT JOIN clock_in_time_change citc",
+	        "    ON acr.attendance_change_request_id = citc.attendance_change_request_id",
+	        "LEFT JOIN clock_out_time_change cotc",
+	        "    ON acr.attendance_change_request_id = cotc.attendance_change_request_id"
+	);
+
+	private static String sql(String... lines) {
+	    return String.join(System.lineSeparator(), lines) + System.lineSeparator();
+	}
 
 	public int insertAttendanceModifyReq(AttendanceModifyHistoryDTO req) {
 	    int result = -1;
@@ -319,10 +323,10 @@ public class AttendanceModifyDAO {
 	public List<AttendanceModifyHistoryDTO> findAttendanceModifyReq(Long empId) {
 	    List<AttendanceModifyHistoryDTO> list = new ArrayList<>();
 
-	    String sql = BASE_SQL + """
-	        WHERE acr.emp_id = ?
-	        ORDER BY acr.work_date DESC
-	    """;
+	    String sql = BASE_SQL + sql(
+	        "WHERE acr.emp_id = ?",
+	        "ORDER BY acr.work_date DESC"
+	    );
 
 	    try (
 	        Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
@@ -346,10 +350,10 @@ public class AttendanceModifyDAO {
 	public List<AttendanceModifyHistoryDTO> findAttendanceModifyReq(LocalDate startDate, LocalDate endDate) {
 	    List<AttendanceModifyHistoryDTO> list = new ArrayList<>();
 
-	    String sql = BASE_SQL + """
-	        WHERE acr.work_date BETWEEN ? AND ?
-	        ORDER BY acr.work_date DESC
-	    """;
+	    String sql = BASE_SQL + sql(
+	        "WHERE acr.work_date BETWEEN ? AND ?",
+	        "ORDER BY acr.work_date DESC"
+	    );
 
 	    try (
 	        Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
@@ -374,11 +378,11 @@ public class AttendanceModifyDAO {
 	public List<AttendanceModifyHistoryDTO> findAttendanceModifyReq(Long empId, LocalDate startDate, LocalDate endDate) {
 	    List<AttendanceModifyHistoryDTO> list = new ArrayList<>();
 
-	    String sql = BASE_SQL + """
-	        WHERE acr.emp_id = ?
-	          AND acr.work_date BETWEEN ? AND ?
-	        ORDER BY acr.work_date DESC
-	    """;
+	    String sql = BASE_SQL + sql(
+	        "WHERE acr.emp_id = ?",
+	        "  AND acr.work_date BETWEEN ? AND ?",
+	        "ORDER BY acr.work_date DESC"
+	    );
 
 	    try (
 	        Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
@@ -404,10 +408,10 @@ public class AttendanceModifyDAO {
 	public List<AttendanceModifyHistoryDTO> findAttendanceModifyReq(CommonStatus state) {
 	    List<AttendanceModifyHistoryDTO> list = new ArrayList<>();
 
-	    String sql = BASE_SQL + """
-	        WHERE acr.STATUS = ?
-	        ORDER BY acr.work_date DESC
-	    """;
+	    String sql = BASE_SQL + sql(
+	        "WHERE acr.STATUS = ?",
+	        "ORDER BY acr.work_date DESC"
+	    );
 
 	    try (
 	        Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
@@ -462,9 +466,9 @@ public class AttendanceModifyDAO {
 	}
 
 	private AttendanceModifyHistoryDTO findAttendanceModifyReqById(Connection conn, Long modHistoryId) throws SQLException {
-	    String sql = BASE_SQL + """
-	        WHERE acr.attendance_change_request_id = ?
-	    """;
+	    String sql = BASE_SQL + sql(
+	        "WHERE acr.attendance_change_request_id = ?"
+	    );
 
 	    try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
 	        pstmt.setLong(1, modHistoryId);
@@ -480,12 +484,12 @@ public class AttendanceModifyDAO {
 	}
 
 	private AttendanceInfo findAttendanceInfo(Connection conn, Long empId, LocalDate workDate) throws SQLException {
-	    String sql = """
-	        SELECT on_work_time, off_work_time, is_closed
-	        FROM attendance
-	        WHERE emp_id = ?
-	          AND work_date = ?
-	    """;
+	    String sql = sql(
+	        "SELECT on_work_time, off_work_time, is_closed",
+	        "FROM attendance",
+	        "WHERE emp_id = ?",
+	        "  AND work_date = ?"
+	    );
 
 	    try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
 	        pstmt.setLong(1, empId);
@@ -517,17 +521,17 @@ public class AttendanceModifyDAO {
 	    boolean isOffWorkTimeModified,
 	    Long cancelReqId
 	) throws SQLException {
-	    String sql = """
-	        INSERT INTO attendance_change_request (
-	            emp_id,
-	            work_date,
-	            STATUS,
-	            is_on_work_time_modified,
-	            is_off_work_time_modified,
-	            cancel_req_id
-	        )
-	        VALUES (?, ?, ?, ?, ?, ?)
-	    """;
+	    String sql = sql(
+	        "INSERT INTO attendance_change_request (",
+	        "    emp_id,",
+	        "    work_date,",
+	        "    STATUS,",
+	        "    is_on_work_time_modified,",
+	        "    is_off_work_time_modified,",
+	        "    cancel_req_id",
+	        ")",
+	        "VALUES (?, ?, ?, ?, ?, ?)"
+	    );
 
 	    try (PreparedStatement pstmt = conn.prepareStatement(
 	        sql,
@@ -562,15 +566,15 @@ public class AttendanceModifyDAO {
 	    LocalDate workDate,
 	    CommonStatus state
 	) throws SQLException {
-	    String sql = """
-	        SELECT attendance_change_request_id
-	        FROM attendance_change_request
-	        WHERE emp_id = ?
-	          AND work_date = ?
-	          AND STATUS = ?
-	        ORDER BY attendance_change_request_id DESC
-	        FETCH FIRST 1 ROW ONLY
-	    """;
+	    String sql = sql(
+	        "SELECT attendance_change_request_id",
+	        "FROM attendance_change_request",
+	        "WHERE emp_id = ?",
+	        "  AND work_date = ?",
+	        "  AND STATUS = ?",
+	        "ORDER BY attendance_change_request_id DESC",
+	        "FETCH FIRST 1 ROW ONLY"
+	    );
 
 	    try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
 	        pstmt.setLong(1, empId);
@@ -592,19 +596,19 @@ public class AttendanceModifyDAO {
 	    boolean isOnWorkTimeModified = req.getOnWorkTimeNew() != null;
 	    boolean isOffWorkTimeModified = req.getOffWorkTimeNew() != null;
 
-	    StringBuilder sql = new StringBuilder("""
-	        SELECT acr.STATUS
-	        FROM attendance_change_request acr
-	        LEFT JOIN clock_in_time_change citc
-	            ON acr.attendance_change_request_id = citc.attendance_change_request_id
-	        LEFT JOIN clock_out_time_change cotc
-	            ON acr.attendance_change_request_id = cotc.attendance_change_request_id
-	        WHERE acr.emp_id = ?
-	          AND acr.work_date = ?
-	          AND acr.cancel_req_id IS NULL
-	          AND acr.is_on_work_time_modified = ?
-	          AND acr.is_off_work_time_modified = ?
-	    """);
+	    StringBuilder sql = new StringBuilder(sql(
+	        "SELECT acr.STATUS",
+	        "FROM attendance_change_request acr",
+	        "LEFT JOIN clock_in_time_change citc",
+	        "    ON acr.attendance_change_request_id = citc.attendance_change_request_id",
+	        "LEFT JOIN clock_out_time_change cotc",
+	        "    ON acr.attendance_change_request_id = cotc.attendance_change_request_id",
+	        "WHERE acr.emp_id = ?",
+	        "  AND acr.work_date = ?",
+	        "  AND acr.cancel_req_id IS NULL",
+	        "  AND acr.is_on_work_time_modified = ?",
+	        "  AND acr.is_off_work_time_modified = ?"
+	    ));
 
 	    if (isOnWorkTimeModified) {
 	        sql.append(" AND citc.time_old = ? AND citc.time_new = ? ");
@@ -618,10 +622,10 @@ public class AttendanceModifyDAO {
 	        sql.append(" AND cotc.attendance_change_request_id IS NULL ");
 	    }
 
-	    sql.append("""
-	        ORDER BY acr.attendance_change_request_id DESC
-	        FETCH FIRST 1 ROW ONLY
-	    """);
+	    sql.append(sql(
+	        "ORDER BY acr.attendance_change_request_id DESC",
+	        "FETCH FIRST 1 ROW ONLY"
+	    ));
 
 	    try (PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
 	        int index = 1;
@@ -701,14 +705,14 @@ public class AttendanceModifyDAO {
 	    LocalTime oldTime,
 	    LocalTime newTime
 	) throws SQLException {
-	    String sql = """
-	        INSERT INTO clock_in_time_change (
-	            attendance_change_request_id,
-	            time_old,
-	            time_new
-	        )
-	        VALUES (?, ?, ?)
-	    """;
+	    String sql = sql(
+	        "INSERT INTO clock_in_time_change (",
+	        "    attendance_change_request_id,",
+	        "    time_old,",
+	        "    time_new",
+	        ")",
+	        "VALUES (?, ?, ?)"
+	    );
 
 	    try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
 	        pstmt.setLong(1, requestId);
@@ -726,14 +730,14 @@ public class AttendanceModifyDAO {
 	    LocalTime oldTime,
 	    LocalTime newTime
 	) throws SQLException {
-	    String sql = """
-	        INSERT INTO clock_out_time_change (
-	            attendance_change_request_id,
-	            time_old,
-	            time_new
-	        )
-	        VALUES (?, ?, ?)
-	    """;
+	    String sql = sql(
+	        "INSERT INTO clock_out_time_change (",
+	        "    attendance_change_request_id,",
+	        "    time_old,",
+	        "    time_new",
+	        ")",
+	        "VALUES (?, ?, ?)"
+	    );
 
 	    try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
 	        pstmt.setLong(1, requestId);
@@ -749,14 +753,14 @@ public class AttendanceModifyDAO {
 	    boolean isOffWorkTimeModified = req.getOffWorkTimeNew() != null;
 
 	    if (isOnWorkTimeModified && isOffWorkTimeModified) {
-	        String sql = """
-	            UPDATE attendance
-	            SET on_work_time = ?,
-	                off_work_time = ?
-	            WHERE emp_id = ?
-	              AND work_date = ?
-	              AND is_closed = 'N'
-	        """;
+	        String sql = sql(
+	            "UPDATE attendance",
+	            "SET on_work_time = ?,",
+	            "    off_work_time = ?",
+	            "WHERE emp_id = ?",
+	            "  AND work_date = ?",
+	            "  AND is_closed = 'N'"
+	        );
 
 	        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
 	            setTimestamp(pstmt, 1, req.getReqDate(), req.getOnWorkTimeNew());
@@ -769,13 +773,13 @@ public class AttendanceModifyDAO {
 	    }
 
 	    if (isOnWorkTimeModified) {
-	        String sql = """
-	            UPDATE attendance
-	            SET on_work_time = ?
-	            WHERE emp_id = ?
-	              AND work_date = ?
-	              AND is_closed = 'N'
-	        """;
+	        String sql = sql(
+	            "UPDATE attendance",
+	            "SET on_work_time = ?",
+	            "WHERE emp_id = ?",
+	            "  AND work_date = ?",
+	            "  AND is_closed = 'N'"
+	        );
 
 	        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
 	            setTimestamp(pstmt, 1, req.getReqDate(), req.getOnWorkTimeNew());
@@ -787,13 +791,13 @@ public class AttendanceModifyDAO {
 	    }
 
 	    if (isOffWorkTimeModified) {
-	        String sql = """
-	            UPDATE attendance
-	            SET off_work_time = ?
-	            WHERE emp_id = ?
-	              AND work_date = ?
-	              AND is_closed = 'N'
-	        """;
+	        String sql = sql(
+	            "UPDATE attendance",
+	            "SET off_work_time = ?",
+	            "WHERE emp_id = ?",
+	            "  AND work_date = ?",
+	            "  AND is_closed = 'N'"
+	        );
 
 	        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
 	            setTimestamp(pstmt, 1, req.getReqDate(), req.getOffWorkTimeNew());

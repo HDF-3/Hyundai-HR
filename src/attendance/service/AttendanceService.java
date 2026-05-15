@@ -92,22 +92,22 @@ public class AttendanceService {
 		
 		//근태 DB에서 사용하는 형식으로 변환..
 		switch(lt) {
-			case LeaveType.ANNUAL :
+			case ANNUAL :
 				missing_punch_reason_type=5;
 				break;
-			case LeaveType.HALF_AM :
+			case HALF_AM :
 				missing_punch_reason_type=9;
 				break;
-			case LeaveType.HALF_PM :
+			case HALF_PM :
 				missing_punch_reason_type=10;
 				break;
-			case LeaveType.OUT_SIDE :
+			case OUT_SIDE :
 				missing_punch_reason_type=2;
 				break;
-			case LeaveType.SICK :
+			case SICK :
 				missing_punch_reason_type=7;
 				break;
-			case LeaveType.FAMILY_EVENT :
+			case FAMILY_EVENT :
 				missing_punch_reason_type=8;
 				break;			
 		}

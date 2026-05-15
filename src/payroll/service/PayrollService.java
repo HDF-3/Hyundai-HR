@@ -226,6 +226,7 @@ public class PayrollService {
                 additionalAllowanceTotal,
                 conn
         );
+        payrollDAO.refreshPayrollTotal(payrollDetail.getPayrollId(), conn);
     }
 
     private Connection openTransaction() throws Exception {

@@ -62,18 +62,17 @@ public class DeductionDAO {
 
         try {
             conn = ConnectionHelper.getConnection(DBType.ORACLE);
-            String sql = "insert into deduction(deduction_id, payroll_id, national_pension, health_insurance, long_term_care_insurance, employment_insurance, income_tax, local_income_tax) values(?,?,?,?,?,?,?,?)";
+            String sql = "insert into deduction(deduction_id, payroll_id, national_pension, health_insurance, long_term_care_insurance, employment_insurance, income_tax, local_income_tax) values(seq_deduction_id.nextval,?,?,?,?,?,?,?)";
 
             pstmt = conn.prepareStatement(sql);
 
-            pstmt.setLong(1, deductionDTO.getDeductionId());
-            pstmt.setLong(2, deductionDTO.getPayrollId());
-            pstmt.setBigDecimal(3, deductionDTO.getNationalPension());
-            pstmt.setBigDecimal(4, deductionDTO.getHealthInsurance());
-            pstmt.setBigDecimal(5, deductionDTO.getLongTermCareInsurance());
-            pstmt.setBigDecimal(6, deductionDTO.getEmploymentInsurance());
-            pstmt.setBigDecimal(7, deductionDTO.getIncomeTax());
-            pstmt.setBigDecimal(8, deductionDTO.getLocalIncomeTax());
+            pstmt.setLong(1, deductionDTO.getPayrollId());
+            pstmt.setBigDecimal(2, deductionDTO.getNationalPension());
+            pstmt.setBigDecimal(3, deductionDTO.getHealthInsurance());
+            pstmt.setBigDecimal(4, deductionDTO.getLongTermCareInsurance());
+            pstmt.setBigDecimal(5, deductionDTO.getEmploymentInsurance());
+            pstmt.setBigDecimal(6, deductionDTO.getIncomeTax());
+            pstmt.setBigDecimal(7, deductionDTO.getLocalIncomeTax());
 
             rowcount = pstmt.executeUpdate();
 

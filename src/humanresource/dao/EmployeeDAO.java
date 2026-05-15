@@ -151,6 +151,8 @@ public class EmployeeDAO {
                 emp.setSalAccount(rs.getString("SALARY_ACCOUNT"));
                 emp.setPayGrade(rs.getInt("PAY_GRADE"));
                 emp.setPassword(rs.getString("PASSWORD"));
+                String isAdmin = rs.getString("IS_ADMIN");
+                emp.setIsAdmin("Y".equalsIgnoreCase(isAdmin) || "TRUE".equalsIgnoreCase(isAdmin));
             }
 
         } catch (SQLException e) {

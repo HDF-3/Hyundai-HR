@@ -34,6 +34,22 @@ public class LeaveService {
         printAnnualLeave(leaveDTO);
     }
     // 휴가 신청
+    public List<AnnualLeaveDTO> getAnnualLeaveRows(Long employeeId) {
+        return leaveDAO.findAnnualLeaveListByEmployeeId(employeeId);
+    }
+
+    public AnnualLeaveDTO findActiveAnnualLeave(Long employeeId) {
+        return leaveDAO.findAnnualLeaveById(employeeId);
+    }
+
+    public List<LeaveRequestDTO> getLeaveRequests(Long employeeId) {
+        return leaveDAO.findLeaveRequestsByEmployeeId(employeeId);
+    }
+
+    public List<LeaveRequestDTO> getPendingApprovalRequests(Long adminId) {
+        return leaveApprovalDAO.findPendingRequest(adminId);
+    }
+
     public boolean requestLeave(LeaveRequestDTO leaveRequestDTO) {
         try {
             Long employeeId = leaveRequestDTO.getEmployeeId();

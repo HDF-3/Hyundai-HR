@@ -141,19 +141,18 @@ public class PayrollDAO {
 
         try {
             conn = ConnectionHelper.getConnection(DBType.ORACLE);
-            String sql = "insert into payroll(payroll_id, employee_id, payroll_year_month, total_earnings, total_deductions, net_pay, confirmed_at, pay_date, status) values(?,?,?,?,?,?,?,?,?)";
+            String sql = "insert into payroll(payroll_id, employee_id, payroll_year_month, total_earnings, total_deductions, net_pay, confirmed_at, pay_date, status) values(seq_payroll_id.nextval,?,?,?,?,?,?,?,?)";
 
             pstmt = conn.prepareStatement(sql);
 
-            pstmt.setLong(1, payroll.getPayrollId());
-            pstmt.setLong(2, payroll.getEmployeeId());
-            pstmt.setDate(3, Date.valueOf(payroll.getPayrollYearMonth().atDay(1)));
-            pstmt.setBigDecimal(4, payroll.getTotalEarnings());
-            pstmt.setBigDecimal(5, payroll.getTotalDeductions());
-            pstmt.setBigDecimal(6, payroll.getNetPay());
-            setNullableDate(pstmt, 7, payroll.getConfirmedAt());
-            setNullableDate(pstmt, 8, payroll.getPayDate());
-            pstmt.setString(9, payroll.getStatus().name());
+            pstmt.setLong(1, payroll.getEmployeeId());
+            pstmt.setDate(2, Date.valueOf(payroll.getPayrollYearMonth().atDay(1)));
+            pstmt.setBigDecimal(3, payroll.getTotalEarnings());
+            pstmt.setBigDecimal(4, payroll.getTotalDeductions());
+            pstmt.setBigDecimal(5, payroll.getNetPay());
+            setNullableDate(pstmt, 6, payroll.getConfirmedAt());
+            setNullableDate(pstmt, 7, payroll.getPayDate());
+            pstmt.setString(8, payroll.getStatus().name());
 
             rowcount = pstmt.executeUpdate();
 
@@ -252,18 +251,30 @@ public class PayrollDAO {
 
     public int refreshPayrollTotal(Long payrollId) {
         Connection conn = null;
-        PreparedStatement pstmt = null;
-        int rowcount = 0;
 
         try {
             conn = ConnectionHelper.getConnection(DBType.ORACLE);
+            return refreshPayrollTotal(payrollId, conn);
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            return 0;
+        } finally {
+            ConnectionHelper.close(conn);
+        }
+    }
+
+    public int refreshPayrollTotal(Long payrollId, Connection conn) throws SQLException {
+        PreparedStatement pstmt = null;
+
+        try {
             String sql = "update payroll p "
                     + "set (total_earnings, total_deductions, net_pay) = ( "
                     + "    select "
-                    + "        e.base_salary + e.overtime_pay + e.transportation_allowance + e.performance_bonus + e.additional_allowance, "
-                    + "        d.national_pension + d.health_insurance + d.long_term_care_insurance + d.employment_insurance + d.income_tax + d.local_income_tax, "
-                    + "        (e.base_salary + e.overtime_pay + e.transportation_allowance + e.performance_bonus + e.additional_allowance) "
-                    + "        - (d.national_pension + d.health_insurance + d.long_term_care_insurance + d.employment_insurance + d.income_tax + d.local_income_tax) "
+                    + "        nvl(e.base_salary, 0) + nvl(e.overtime_pay, 0) + nvl(e.transportation_allowance, 0) + nvl(e.performance_bonus, 0) + nvl(e.additional_allowance, 0), "
+                    + "        nvl(d.national_pension, 0) + nvl(d.health_insurance, 0) + nvl(d.long_term_care_insurance, 0) + nvl(d.employment_insurance, 0) + nvl(d.income_tax, 0) + nvl(d.local_income_tax, 0), "
+                    + "        (nvl(e.base_salary, 0) + nvl(e.overtime_pay, 0) + nvl(e.transportation_allowance, 0) + nvl(e.performance_bonus, 0) + nvl(e.additional_allowance, 0)) "
+                    + "        - (nvl(d.national_pension, 0) + nvl(d.health_insurance, 0) + nvl(d.long_term_care_insurance, 0) + nvl(d.employment_insurance, 0) + nvl(d.income_tax, 0) + nvl(d.local_income_tax, 0)) "
                     + "    from earning e "
                     + "    join deduction d on d.payroll_id = e.payroll_id "
                     + "    where e.payroll_id = p.payroll_id "
@@ -279,16 +290,11 @@ public class PayrollDAO {
             pstmt = conn.prepareStatement(sql);
             pstmt.setLong(1, payrollId);
 
-            rowcount = pstmt.executeUpdate();
+            return pstmt.executeUpdate();
 
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
         } finally {
             ConnectionHelper.close(pstmt);
-            ConnectionHelper.close(conn);
         }
-
-        return rowcount;
     }
 
     public int deletePayroll(Long payrollId, Connection conn) throws SQLException {

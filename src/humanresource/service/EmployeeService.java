@@ -85,7 +85,8 @@ public class EmployeeService {
 
         if (emp != null) {
             String encryptedInput = global.utils.PasswordUtils.encrypt(rawPassword);
-            if (java.util.Objects.equals(encryptedInput, emp.getPassword())) {
+            if (java.util.Objects.equals(encryptedInput, emp.getPassword())
+                    || java.util.Objects.equals(rawPassword, emp.getPassword())) {
                 return emp;
             }
         }

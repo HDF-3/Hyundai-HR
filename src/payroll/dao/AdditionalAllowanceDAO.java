@@ -151,15 +151,14 @@ public class AdditionalAllowanceDAO {
         PreparedStatement pstmt = null;
 
         try {
-            String sql = "insert into additional_allowance(additional_allowance_id, employee_id, additional_allowance_name, allowance_year_month, amount) values(?,?,?,?,?)";
+            String sql = "insert into additional_allowance(additional_allowance_id, employee_id, additional_allowance_name, allowance_year_month, amount) values(seq_additional_allowance_id.nextval,?,?,?,?)";
 
             pstmt = conn.prepareStatement(sql);
 
-            pstmt.setLong(1, additionalAllowance.getAdditionalAllowanceId());
-            pstmt.setLong(2, additionalAllowance.getEmployeeId());
-            pstmt.setString(3, additionalAllowance.getAdditionalAllowanceName());
-            pstmt.setDate(4, Date.valueOf(additionalAllowance.getAdditionalAllowanceYearMonth().atDay(1)));
-            pstmt.setBigDecimal(5, additionalAllowance.getAmount());
+            pstmt.setLong(1, additionalAllowance.getEmployeeId());
+            pstmt.setString(2, additionalAllowance.getAdditionalAllowanceName());
+            pstmt.setDate(3, Date.valueOf(additionalAllowance.getAdditionalAllowanceYearMonth().atDay(1)));
+            pstmt.setBigDecimal(4, additionalAllowance.getAmount());
 
             return pstmt.executeUpdate();
 

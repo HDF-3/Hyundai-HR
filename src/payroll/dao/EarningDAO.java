@@ -33,17 +33,16 @@ public class EarningDAO {
 
         try {
             conn = ConnectionHelper.getConnection(DBType.ORACLE);
-            String sql = "insert into earning(earning_id, payroll_id, base_salary, overtime_pay, transportation_allowance, performance_bonus, additional_allowance) values(?,?,?,?,?,?,?)";
+            String sql = "insert into earning(earning_id, payroll_id, base_salary, overtime_pay, transportation_allowance, performance_bonus, additional_allowance) values(seq_earning_id.nextval,?,?,?,?,?,?)";
 
             pstmt = conn.prepareStatement(sql);
 
-            pstmt.setLong(1, earningDTO.getEarningId());
-            pstmt.setLong(2, earningDTO.getPayrollId());
-            pstmt.setBigDecimal(3, earningDTO.getBaseSalary());
-            pstmt.setBigDecimal(4, earningDTO.getOvertimePay());
-            pstmt.setBigDecimal(5, earningDTO.getTransportationAllowance());
-            pstmt.setBigDecimal(6, earningDTO.getPerformanceBonus());
-            pstmt.setBigDecimal(7, earningDTO.getAdditionalAllowance());
+            pstmt.setLong(1, earningDTO.getPayrollId());
+            pstmt.setBigDecimal(2, earningDTO.getBaseSalary());
+            pstmt.setBigDecimal(3, earningDTO.getOvertimePay());
+            pstmt.setBigDecimal(4, earningDTO.getTransportationAllowance());
+            pstmt.setBigDecimal(5, earningDTO.getPerformanceBonus());
+            pstmt.setBigDecimal(6, earningDTO.getAdditionalAllowance());
 
             rowcount = pstmt.executeUpdate();
 
