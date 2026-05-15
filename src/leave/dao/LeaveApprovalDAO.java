@@ -100,14 +100,12 @@ public class LeaveApprovalDAO {
             return false;
         }
     }
-    public boolean isAdmin(Long adminId) {
+    public boolean isAdmin(Connection conn, Long adminId) {
         String sql = "select count(*) " +
                 "from EMPLOYEE " +
                 "where EMP_ID = ? " +
                 "and IS_ADMIN = 'Y'";
-        try (
-                Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
-                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setLong(1, adminId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {

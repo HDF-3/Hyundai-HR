@@ -94,9 +94,6 @@ public class LeaveService {
     }
     // (관리자) 같은 부서 직원들의 대기 중인 휴가 목록 조회
     public void getLeaveApprovalList(Long adminId) {
-        if (!leaveApprovalDAO.isAdmin(adminId)) {
-            throw new RuntimeException("관리자 권한이 없습니다.");
-        }
         List<LeaveRequestDTO> list = leaveApprovalDAO.findPendingRequest(adminId);
         if (list.isEmpty()) {
             System.out.println("결재 대기 중인 휴가 신청이 없습니다.");
@@ -113,7 +110,7 @@ public class LeaveService {
             conn = ConnectionHelper.getConnection(DBType.ORACLE);
             conn.setAutoCommit(false);
 
-            if (!leaveApprovalDAO.isAdmin(adminId)) {
+            if (!leaveApprovalDAO.isAdmin(conn, adminId)) {
                 throw new RuntimeException("관리자 권한이 없습니다.");
             }
 
