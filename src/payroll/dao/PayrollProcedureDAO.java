@@ -17,7 +17,7 @@ public class PayrollProcedureDAO {
         try {
             conn = ConnectionHelper.getConnection(DBType.ORACLE);
 
-            String sql = "{ call proc_create_monthly_payroll(?) }";
+            String sql = "{ call CREATE_MONTHLY_PAYROLL(?) }";
 
             cstmt = conn.prepareCall(sql);
             cstmt.setDate(1, Date.valueOf(yearMonth.atDay(1)));
@@ -25,7 +25,7 @@ public class PayrollProcedureDAO {
             cstmt.execute();
 
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException("Failed to create monthly payroll.", e);
         } finally {
             ConnectionHelper.close(cstmt);
             ConnectionHelper.close(conn);
