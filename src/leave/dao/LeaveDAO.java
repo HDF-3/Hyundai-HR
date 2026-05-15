@@ -1,6 +1,8 @@
 package leave.dao;
 
+import global.types.CommonStatus;
 import global.types.DBType;
+import global.types.LeaveType;
 import global.utils.ConnectionHelper;
 import leave.dto.AnnualLeaveDTO;
 import leave.dto.LeaveRequestDTO;
@@ -89,5 +91,36 @@ public class LeaveDAO {
             return false;
         }
 
+    }
+    public List<LeaveRequestDTO> findLeaveRequestsByEmployeeId(Long empId) {
+        List<LeaveRequestDTO> list = new ArrayList<>();
+        // 최신 신청 건이 위로 오도록 시작일(START_DATE) 기준 내림차순 정렬
+        String sql = "SELECT * FROM LEAVE_REQUEST WHERE EMPLOYEE_ID = ? ORDER BY START_DATE DESC";
+
+        try (
+                Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
+                PreparedStatement pstmt = conn.prepareStatement(sql);
+                ){
+            pstmt.setLong(1, empId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    LeaveRequestDTO dto = new LeaveRequestDTO();
+                    dto.setLeaveRequestId(rs.getLong("LEAVE_REQUEST_ID"));
+                    dto.setEmployeeId(rs.getLong("EMPLOYEE_ID"));
+                    dto.setReason(rs.getString("LEAVE_REASON"));
+                    dto.setStartDate(rs.getDate("START_DATE").toLocalDate());
+                    dto.setEndDate(rs.getDate("END_DATE").toLocalDate());
+                    // 문자열로 저장된 코드를 Enum으로 변환
+                    dto.setLeaveType(LeaveType.valueOf(rs.getString("LEAVE_TYPE_CODE")));
+                    dto.setStatus(CommonStatus.valueOf(rs.getString("REQUEST_STATUS")));
+
+                    list.add(dto);
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
     }
 }
