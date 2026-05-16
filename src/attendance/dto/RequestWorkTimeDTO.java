@@ -1,7 +1,7 @@
 package attendance.dto;
 
-import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.YearMonth;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,7 +10,7 @@ import lombok.Data;
 @AllArgsConstructor
 public class RequestWorkTimeDTO {
 	private Long empId;
-	private LocalDate appliedDate;
+	private YearMonth appliedMonth;
 	private LocalTime onWorkTime;
 	private LocalTime offWorkTime;
 }
