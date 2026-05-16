@@ -28,14 +28,14 @@ public class PayrollDetailDAO {
         detail.setStatus(CommonStatus.valueOf(rs.getString("status")));
 
         Date confirmedAt = rs.getDate("confirmed_at");
-        Date payDate = rs.getDate("pay_date");
+        Date paidAt = rs.getDate("paid_at");
 
         if (confirmedAt != null) {
             detail.setConfirmedAt(confirmedAt.toLocalDate());
         }
 
-        if (payDate != null) {
-            detail.setPayDate(payDate.toLocalDate());
+        if (paidAt != null) {
+            detail.setPaidAt(paidAt.toLocalDate());
         }
 
         detail.setBaseSalary(rs.getBigDecimal("base_salary"));
@@ -67,7 +67,7 @@ public class PayrollDetailDAO {
                     "select " +
                     "p.payroll_id, p.employee_id, e.name as employee_name, " +
                     "p.payroll_year_month, p.total_earnings, p.total_deductions, p.net_pay, " +
-                    "p.status, p.confirmed_at, p.pay_date, " +
+                    "p.status, p.confirmed_at, p.paid_at, " +
                     "er.base_salary, er.overtime_pay, er.transportation_allowance, " +
                     "er.performance_bonus, er.additional_allowance, " +
                     "d.national_pension, d.health_insurance, d.long_term_care_insurance, " +
@@ -110,7 +110,7 @@ public class PayrollDetailDAO {
                     "select " +
                     "p.payroll_id, p.employee_id, e.name as employee_name, " +
                     "p.payroll_year_month, p.total_earnings, p.total_deductions, p.net_pay, " +
-                    "p.status, p.confirmed_at, p.pay_date, " +
+                    "p.status, p.confirmed_at, p.paid_at, " +
                     "er.base_salary, er.overtime_pay, er.transportation_allowance, " +
                     "er.performance_bonus, er.additional_allowance, " +
                     "d.national_pension, d.health_insurance, d.long_term_care_insurance, " +
@@ -152,7 +152,7 @@ public class PayrollDetailDAO {
                     "select " +
                     "p.payroll_id, p.employee_id, e.name as employee_name, " +
                     "p.payroll_year_month, p.total_earnings, p.total_deductions, p.net_pay, " +
-                    "p.status, p.confirmed_at, p.pay_date, " +
+                    "p.status, p.confirmed_at, p.paid_at, " +
                     "er.base_salary, er.overtime_pay, er.transportation_allowance, " +
                     "er.performance_bonus, er.additional_allowance, " +
                     "d.national_pension, d.health_insurance, d.long_term_care_insurance, " +

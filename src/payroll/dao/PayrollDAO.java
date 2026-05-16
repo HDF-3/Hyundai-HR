@@ -28,10 +28,10 @@ public class PayrollDAO {
         payroll.setNetPay(rs.getBigDecimal("net_pay"));
 
         Date confirmedAt = rs.getDate("confirmed_at");
-        Date payDate = rs.getDate("pay_date");
+        Date paidAt = rs.getDate("paid_at");
 
         payroll.setConfirmedAt(confirmedAt == null ? null : confirmedAt.toLocalDate());
-        payroll.setPayDate(payDate == null ? null : payDate.toLocalDate());
+        payroll.setPaidAt(paidAt == null ? null : paidAt.toLocalDate());
         payroll.setStatus(CommonStatus.valueOf(rs.getString("status")));
 
         return payroll;
@@ -55,7 +55,7 @@ public class PayrollDAO {
 
         try {
             conn = ConnectionHelper.getConnection(DBType.ORACLE);
-            String sql = "select payroll_id, employee_id, payroll_year_month, total_earnings, total_deductions, net_pay, confirmed_at, pay_date, status from payroll where payroll_id=?";
+            String sql = "select payroll_id, employee_id, payroll_year_month, total_earnings, total_deductions, net_pay, confirmed_at, paid_at, status from payroll where payroll_id=?";
 
             pstmt = conn.prepareStatement(sql);
             pstmt.setLong(1, payrollId);
@@ -84,7 +84,7 @@ public class PayrollDAO {
 
         try {
             conn = ConnectionHelper.getConnection(DBType.ORACLE);
-            String sql = "select payroll_id, employee_id, payroll_year_month, total_earnings, total_deductions, net_pay, confirmed_at, pay_date, status from payroll where payroll_year_month=? order by employee_id";
+            String sql = "select payroll_id, employee_id, payroll_year_month, total_earnings, total_deductions, net_pay, confirmed_at, paid_at, status from payroll where payroll_year_month=? order by employee_id";
 
             pstmt = conn.prepareStatement(sql);
             pstmt.setDate(1, Date.valueOf(payrollYearMonth.atDay(1)));
@@ -113,7 +113,7 @@ public class PayrollDAO {
 
         try {
             conn = ConnectionHelper.getConnection(DBType.ORACLE);
-            String sql = "select payroll_id, employee_id, payroll_year_month, total_earnings, total_deductions, net_pay, confirmed_at, pay_date, status from payroll where employee_id=? order by payroll_year_month desc";
+            String sql = "select payroll_id, employee_id, payroll_year_month, total_earnings, total_deductions, net_pay, confirmed_at, paid_at, status from payroll where employee_id=? order by payroll_year_month desc";
 
             pstmt = conn.prepareStatement(sql);
             pstmt.setLong(1, employeeId);
@@ -141,7 +141,7 @@ public class PayrollDAO {
 
         try {
             conn = ConnectionHelper.getConnection(DBType.ORACLE);
-            String sql = "insert into payroll(payroll_id, employee_id, payroll_year_month, total_earnings, total_deductions, net_pay, confirmed_at, pay_date, status) values(SEQ_PAYROLL_ID.nextval,?,?,?,?,?,?,?,?)";
+            String sql = "insert into payroll(payroll_id, employee_id, payroll_year_month, total_earnings, total_deductions, net_pay, confirmed_at, paid_at, status) values(SEQ_PAYROLL_ID.nextval,?,?,?,?,?,?,?,?)";
 
             pstmt = conn.prepareStatement(sql);
 
@@ -151,7 +151,7 @@ public class PayrollDAO {
             pstmt.setBigDecimal(4, payroll.getTotalDeductions());
             pstmt.setBigDecimal(5, payroll.getNetPay());
             setNullableDate(pstmt, 6, payroll.getConfirmedAt());
-            setNullableDate(pstmt, 7, payroll.getPayDate());
+            setNullableDate(pstmt, 7, payroll.getPaidAt());
             pstmt.setString(8, payroll.getStatus().name());
 
             rowcount = pstmt.executeUpdate();
@@ -173,7 +173,7 @@ public class PayrollDAO {
 
         try {
             conn = ConnectionHelper.getConnection(DBType.ORACLE);
-            String sql = "update payroll set employee_id=?, payroll_year_month=?, total_earnings=?, total_deductions=?, net_pay=?, confirmed_at=?, pay_date=?, status=? where payroll_id=?";
+            String sql = "update payroll set employee_id=?, payroll_year_month=?, total_earnings=?, total_deductions=?, net_pay=?, confirmed_at=?, paid_at=?, status=? where payroll_id=?";
 
             pstmt = conn.prepareStatement(sql);
 
@@ -183,7 +183,7 @@ public class PayrollDAO {
             pstmt.setBigDecimal(4, payroll.getTotalDeductions());
             pstmt.setBigDecimal(5, payroll.getNetPay());
             setNullableDate(pstmt, 6, payroll.getConfirmedAt());
-            setNullableDate(pstmt, 7, payroll.getPayDate());
+            setNullableDate(pstmt, 7, payroll.getPaidAt());
             pstmt.setString(8, payroll.getStatus().name());
             pstmt.setLong(9, payroll.getPayrollId());
 

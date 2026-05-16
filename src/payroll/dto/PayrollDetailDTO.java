@@ -23,7 +23,7 @@ public class PayrollDetailDTO {
     private BigDecimal netPay;
     private CommonStatus status;
     private LocalDate confirmedAt;
-    private LocalDate payDate;
+    private LocalDate paidAt;
 
     private BigDecimal baseSalary;
     private BigDecimal overtimePay;

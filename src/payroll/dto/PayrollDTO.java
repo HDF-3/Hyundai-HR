@@ -20,6 +20,6 @@ public class PayrollDTO {
 	private BigDecimal totalDeductions;
 	private BigDecimal netPay;
 	private LocalDate confirmedAt;
-	private LocalDate payDate;
+	private LocalDate paidAt;
 	private CommonStatus status;
 }
