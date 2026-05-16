@@ -7,7 +7,7 @@ public class PasswordUtils {
 
         try{
             java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
-            byte[] hash = md.digest(rawPassword.getBytes());
+            byte[] hash = md.digest(rawPassword.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             StringBuilder sb = new StringBuilder();
 
             for(byte b : hash){
@@ -15,8 +15,7 @@ public class PasswordUtils {
             }
             return sb.toString();
         }catch(Exception e){
-            System.out.println(e.getMessage());
-            return null;
+            throw new RuntimeException("비밀번호 암호화 중 오류 발생", e);
         }
     }
 }

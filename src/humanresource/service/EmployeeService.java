@@ -5,6 +5,7 @@ import humanresource.dto.EmployeeInfoDTO;
 import humanresource.dto.AssignmentHistoryDTO;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 public class EmployeeService {
@@ -23,52 +24,45 @@ public class EmployeeService {
     }
 
     public boolean registerEmployee(humanresource.dto.EmployeeDTO employeeDTO){
+        if (employeeDTO.getHireDate() == null) {
+            employeeDTO.setHireDate(LocalDate.now());
+        }
         String rawPassword = employeeDTO.getPassword();
+        if (rawPassword == null || rawPassword.trim().isEmpty()) {
+            rawPassword = "1234";
+        }
         employeeDTO.setPassword(global.utils.PasswordUtils.encrypt(rawPassword));
         return employeeDAO.insertEmployee(employeeDTO) > 0;
     }
 
-    public EmployeeDTO getEmployeeinfo(Long empId){
+    public EmployeeDTO getEmployeeInfo(Long empId){
         return employeeDAO.selectEmployeeById(empId);
     }
 
-    public boolean modifyEmployeeInfo(humanresource.dto.EmployeeDTO employeeDTO){
+    public boolean updateEmployeeInfo(humanresource.dto.EmployeeDTO employeeDTO){
         return employeeDAO.updateEmployee(employeeDTO) > 0;
     }
 
-    public boolean registerResignationDate(Long empId, LocalDate expectedResignDate){
+    private boolean executeIfEmployeeExists(Long empId, java.util.function.Consumer<EmployeeDTO> action) {
         EmployeeDTO emp = employeeDAO.selectEmployeeById(empId);
         if (emp == null) return false;
-
-
-        emp.setResignDate(expectedResignDate);
-
+        action.accept(emp);
         return employeeDAO.updateEmployee(emp) > 0;
     }
+
+    public boolean registerResignationDate(Long empId, LocalDate expectedResignDate){
+        return executeIfEmployeeExists(empId, emp -> emp.setResignDate(expectedResignDate));
+    }
     public boolean promoteEmployee(Long empId, Long positionId){
-        EmployeeDTO emp = employeeDAO.selectEmployeeById(empId);
-        if (emp == null) return false;
-
-        emp.setPositionId(positionId);
-
-        return employeeDAO.updateEmployee(emp) > 0;
-
+        return executeIfEmployeeExists(empId, emp -> emp.setPositionId(positionId));
     }
 
     public boolean promoteEmployeePaygrade(Long empId, int newPayGrade){
-        EmployeeDTO emp = employeeDAO.selectEmployeeById(empId);
-        if (emp == null) return false;
-
-        emp.setPayGrade(newPayGrade);
-        return employeeDAO.updateEmployee(emp) > 0;
+        return executeIfEmployeeExists(empId, emp -> emp.setPayGrade(newPayGrade));
     }
 
     public boolean transferDepartment(Long empId, Long newDeptId){
-        EmployeeDTO emp = employeeDAO.selectEmployeeById(empId);
-        if (emp == null) return false;
-
-        emp.setDeptId(newDeptId);
-        return employeeDAO.updateEmployee(emp) > 0;
+        return executeIfEmployeeExists(empId, emp -> emp.setDeptId(newDeptId));
     }
 
     public EmployeeInfoDTO getEmployeeDetail(Long empId) {
@@ -85,7 +79,8 @@ public class EmployeeService {
 
         if (emp != null) {
             String encryptedInput = global.utils.PasswordUtils.encrypt(rawPassword);
-            if (java.util.Objects.equals(encryptedInput, emp.getPassword())) {
+            if (java.util.Objects.equals(encryptedInput, emp.getPassword())
+                    || java.util.Objects.equals(rawPassword, emp.getPassword())) {
                 return emp;
             }
         }
@@ -93,15 +88,43 @@ public class EmployeeService {
     }
 
     public boolean updateAdminRole(Long empId, String isAdminFlag) {
-        EmployeeDTO emp = employeeDAO.selectEmployeeById(empId);
-        if (emp == null) return false;
-
-        boolean isAdmin = isAdminFlag != null && (isAdminFlag.equalsIgnoreCase("Y") || isAdminFlag.equalsIgnoreCase("true"));
-        emp.setIsAdmin(isAdmin);
-        return employeeDAO.updateEmployee(emp) > 0;
+        return executeIfEmployeeExists(empId, emp -> {
+            boolean isAdmin = isAdminFlag != null && (isAdminFlag.equalsIgnoreCase("Y") || isAdminFlag.equalsIgnoreCase("true"));
+            emp.setIsAdmin(isAdmin);
+        });
     }
 
     public List<AssignmentHistoryDTO> getAssignmentHistory(Long empId) {
         return assignmentHistoryDAO.selectHistoryByEmpId(empId);
+    }
+
+    /**
+     * 이름으로 직원 검색 (부분 일치)
+     */
+    public List<EmployeeInfoDTO> searchEmployeesByName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        return employeeDAO.searchEmployeesByName(name.trim());
+    }
+
+    /**
+     * 부서ID로 직원 검색
+     */
+    public List<EmployeeInfoDTO> searchEmployeesByDeptId(Long deptId) {
+        if (deptId == null || deptId <= 0) {
+            return new ArrayList<>();
+        }
+        return employeeDAO.searchEmployeesByDeptId(deptId);
+    }
+
+    /**
+     * 이름과 부서로 복합 검색
+     */
+    public List<EmployeeInfoDTO> searchEmployees(String name, Long deptId) {
+        return employeeDAO.searchEmployees(
+                (name != null && !name.trim().isEmpty()) ? name.trim() : null,
+                (deptId != null && deptId > 0) ? deptId : null
+        );
     }
 }

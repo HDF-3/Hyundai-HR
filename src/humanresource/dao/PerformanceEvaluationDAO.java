@@ -20,11 +20,11 @@ public class PerformanceEvaluationDAO {
 
         try {
             conn = ConnectionHelper.getConnection(DBType.ORACLE);
-            String sql = "INSERT INTO PERFORMANCE_EVALUATION(TARGET_EMP_ID, EVAL_YEAR, EVAL_QUARTER, GRADE) VALUES (?, ?, ?, ?)";
+            String sql = "INSERT INTO PERFORMANCE_EVALUATION(EVALUATION_ID, TARGET_EMP_ID, EVAL_YEAR, EVAL_QUARTER, GRADE) VALUES (SEQ_BONUS_ID.NEXTVAL, ?, ?, ?, ?)";
 
             pstmt = conn.prepareStatement(sql);
             pstmt.setLong(1, dto.getTargetEmpId());
-            pstmt.setString(2, dto.getEvaluationYear());
+            pstmt.setInt(2, Integer.parseInt(dto.getEvaluationYear()));
 
             if(dto.getEvaluationQuarter() != null) {
                 pstmt.setLong(3, dto.getEvaluationQuarter());
@@ -32,8 +32,7 @@ public class PerformanceEvaluationDAO {
                 pstmt.setNull(3, java.sql.Types.NUMERIC);
             }
             
-
-            pstmt.setInt(4, dto.getPerformanceGrade().getCode()); 
+            pstmt.setInt(4, dto.getPerformanceGrade().getCode());
 
             rowcount = pstmt.executeUpdate();
         } catch (Exception e) {
@@ -53,7 +52,7 @@ public class PerformanceEvaluationDAO {
         List<PerformanceEvaluationDTO> dtoList = new ArrayList<>();
         try {
             conn = ConnectionHelper.getConnection(DBType.ORACLE);
-            String sql = "SELECT * FROM PERFORMANCE_EVALUATION WHERE TARGET_EMP_ID = ?";
+            String sql = "SELECT * FROM PERFORMANCE_EVALUATION WHERE TARGET_EMP_ID = ? ORDER BY EVAL_YEAR DESC, EVAL_QUARTER DESC, EVALUATION_ID DESC";
 
             pstmt = conn.prepareStatement(sql);
             pstmt.setLong(1, empId);

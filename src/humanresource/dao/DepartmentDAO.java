@@ -44,7 +44,7 @@ public class DepartmentDAO {
 
             rowcount = pstmt.executeUpdate();
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            throw new RuntimeException("DB Error", e);
         } finally {
             ConnectionHelper.close(pstmt);
             ConnectionHelper.close(conn);
@@ -66,7 +66,7 @@ public class DepartmentDAO {
 
             rowcount = pstmt.executeUpdate();
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            throw new RuntimeException("DB Error", e);
         }finally {
             ConnectionHelper.close(pstmt);
             ConnectionHelper.close(conn);
@@ -104,7 +104,7 @@ public class DepartmentDAO {
                 deptList.add(dept);
             }
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            throw new RuntimeException("DB Error", e);
         }finally {
             ConnectionHelper.close(pstmt);
             ConnectionHelper.close(rs);
@@ -131,7 +131,7 @@ public class DepartmentDAO {
                 count = rs.getInt(1);
             }
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            throw new RuntimeException("DB Error", e);
         }finally {
             ConnectionHelper.close(pstmt);
             ConnectionHelper.close(rs);
