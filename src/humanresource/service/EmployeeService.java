@@ -3,6 +3,9 @@ package humanresource.service;
 import humanresource.dto.EmployeeDTO;
 import humanresource.dto.EmployeeInfoDTO;
 import humanresource.dto.AssignmentHistoryDTO;
+import humanresource.dao.EmployeeDAO;
+import humanresource.dao.AssignmentHistoryDAO;
+import global.utils.PasswordUtils;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -11,19 +14,19 @@ import java.util.List;
 public class EmployeeService {
 
 
-    private final humanresource.dao.EmployeeDAO employeeDAO;
-    private final humanresource.dao.AssignmentHistoryDAO assignmentHistoryDAO;
+    private final EmployeeDAO employeeDAO;
+    private final AssignmentHistoryDAO assignmentHistoryDAO;
 
     public EmployeeService(){
-        this.employeeDAO = new humanresource.dao.EmployeeDAO();
-        this.assignmentHistoryDAO = new humanresource.dao.AssignmentHistoryDAO();
+        this.employeeDAO = new EmployeeDAO();
+        this.assignmentHistoryDAO = new AssignmentHistoryDAO();
     }
 
     public List<EmployeeDTO> getAllEmployees(){
         return employeeDAO.selectAllEmployees();
     }
 
-    public boolean registerEmployee(humanresource.dto.EmployeeDTO employeeDTO){
+    public boolean registerEmployee(EmployeeDTO employeeDTO){
         if (employeeDTO.getHireDate() == null) {
             employeeDTO.setHireDate(LocalDate.now());
         }
@@ -31,7 +34,7 @@ public class EmployeeService {
         if (rawPassword == null || rawPassword.trim().isEmpty()) {
             rawPassword = "1234";
         }
-        employeeDTO.setPassword(global.utils.PasswordUtils.encrypt(rawPassword));
+        employeeDTO.setPassword(PasswordUtils.encrypt(rawPassword));
         return employeeDAO.insertEmployee(employeeDTO) > 0;
     }
 
@@ -39,7 +42,7 @@ public class EmployeeService {
         return employeeDAO.selectEmployeeById(empId);
     }
 
-    public boolean updateEmployeeInfo(humanresource.dto.EmployeeDTO employeeDTO){
+    public boolean updateEmployeeInfo(EmployeeDTO employeeDTO){
         return employeeDAO.updateEmployee(employeeDTO) > 0;
     }
 
@@ -78,7 +81,7 @@ public class EmployeeService {
 
 
         if (emp != null) {
-            String encryptedInput = global.utils.PasswordUtils.encrypt(rawPassword);
+            String encryptedInput = PasswordUtils.encrypt(rawPassword);
             if (java.util.Objects.equals(encryptedInput, emp.getPassword())
                     || java.util.Objects.equals(rawPassword, emp.getPassword())) {
                 return emp;

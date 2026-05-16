@@ -1,5 +1,6 @@
 package humanresource.service;
 
+import humanresource.dao.DepartmentDAO;
 import humanresource.dto.DepartmentDTO;
 
 import java.util.ArrayList;
@@ -9,10 +10,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class DepartmentService {
-    private final humanresource.dao.DepartmentDAO departmentDAO;
+    private final DepartmentDAO departmentDAO;
 
     public DepartmentService() {
-        this.departmentDAO = new humanresource.dao.DepartmentDAO();
+        this.departmentDAO = new DepartmentDAO();
     }
 
     public int registerDepartment(DepartmentDTO departmentDTO) {

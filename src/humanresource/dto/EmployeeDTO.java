@@ -1,6 +1,7 @@
 package humanresource.dto;
 
 
+import global.types.EmploymentStatus;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -16,7 +17,7 @@ public class EmployeeDTO {
     private Long empId;
     private Long deptId;
     private Long positionId;
-    private global.types.EmploymentStatus statusId;
+    private EmploymentStatus statusId;
     private String ename;
     private LocalDate hireDate;
     private LocalDate resignDate;
