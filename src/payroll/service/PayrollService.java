@@ -41,6 +41,16 @@ public class PayrollService {
         return payrollDAO.findPayrollList(employeeId);
     }
 
+    public List<PayrollDTO> searchPayrollList(
+            YearMonth yearMonth,
+            CommonStatus status,
+            Long deptId,
+            Long positionId,
+            Long employeeId
+    ) {
+        return payrollDAO.searchPayrollList(yearMonth, status, deptId, positionId, employeeId);
+    }
+
     public PayrollDetailDTO getPayrollDetail(Long payrollId) {
         return payrollDetailDAO.findPayrollDetail(payrollId);
     }

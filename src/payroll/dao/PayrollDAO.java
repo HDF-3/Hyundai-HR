@@ -134,6 +134,89 @@ public class PayrollDAO {
         return payrollList;
     }
 
+    public List<PayrollDTO> searchPayrollList(
+            YearMonth payrollYearMonth,
+            CommonStatus status,
+            Long deptId,
+            Long positionId,
+            Long employeeId
+    ) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        List<PayrollDTO> payrollList = new ArrayList<PayrollDTO>();
+
+        try {
+            conn = ConnectionHelper.getConnection(DBType.ORACLE);
+
+            StringBuilder sql = new StringBuilder();
+            List<Object> parameters = new ArrayList<Object>();
+
+            sql.append("select p.payroll_id, p.employee_id, p.payroll_year_month, ");
+            sql.append("p.total_earnings, p.total_deductions, p.net_pay, ");
+            sql.append("p.confirmed_at, p.paid_at, p.status ");
+            sql.append("from payroll p ");
+            sql.append("join employee e on p.employee_id = e.emp_id ");
+            sql.append("where 1=1 ");
+
+            if (payrollYearMonth != null) {
+                sql.append("and p.payroll_year_month = ? ");
+                parameters.add(Date.valueOf(payrollYearMonth.atDay(1)));
+            }
+
+            if (status != null) {
+                sql.append("and p.status = ? ");
+                parameters.add(status.name());
+            }
+
+            if (deptId != null) {
+                sql.append("and e.dept_id = ? ");
+                parameters.add(deptId);
+            }
+
+            if (positionId != null) {
+                sql.append("and e.position_id = ? ");
+                parameters.add(positionId);
+            }
+
+            if (employeeId != null) {
+                sql.append("and e.emp_id = ? ");
+                parameters.add(employeeId);
+            }
+
+            sql.append("order by p.payroll_year_month desc, p.employee_id");
+
+            pstmt = conn.prepareStatement(sql.toString());
+
+            for (int i = 0; i < parameters.size(); i++) {
+                Object parameter = parameters.get(i);
+
+                if (parameter instanceof Date) {
+                    pstmt.setDate(i + 1, (Date) parameter);
+                } else if (parameter instanceof Long) {
+                    pstmt.setLong(i + 1, (Long) parameter);
+                } else {
+                    pstmt.setString(i + 1, parameter.toString());
+                }
+            }
+
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                payrollList.add(mapPayroll(rs));
+            }
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        } finally {
+            ConnectionHelper.close(rs);
+            ConnectionHelper.close(pstmt);
+            ConnectionHelper.close(conn);
+        }
+
+        return payrollList;
+    }
+
     public int insertPayroll(PayrollDTO payroll) {
         Connection conn = null;
         PreparedStatement pstmt = null;
