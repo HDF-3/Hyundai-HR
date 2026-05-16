@@ -21,7 +21,7 @@ public class AssignmentHistoryDAO {
         try {
             conn = ConnectionHelper.getConnection(DBType.ORACLE);
 
-            String sql = "SELECT h.HISTORY_ID, e.NAME, d.DEPT_NAME, p.POSITION_NAME, NVL(e.PAY_GRADE, 0) AS PAY_GRADE, " +
+            String sql = "SELECT h.HISTORY_ID, e.NAME, d.DEPT_NAME, p.POSITION_NAME, NVL(h.PAY_GRADE, 0) AS PAY_GRADE, " +
                     "r.REASON_NAME, h.START_DATE, h.END_DATE " +
                     "FROM ASSIGNMENT_HISTORY h " +
                     "JOIN EMPLOYEE e ON h.EMP_ID = e.EMP_ID " +
@@ -55,7 +55,7 @@ public class AssignmentHistoryDAO {
                 historyList.add(dto);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException("DB Error", e);
         } finally {
             ConnectionHelper.close(rs);
             ConnectionHelper.close(pstmt);
