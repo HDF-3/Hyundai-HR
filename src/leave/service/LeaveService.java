@@ -12,7 +12,10 @@ import leave.strategy.LeavePolicy;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.List;
+
+import attendance.service.AttendanceService;
 
 
 public class LeaveService {
@@ -140,11 +143,16 @@ public class LeaveService {
             }
 
             boolean statusResult = leaveApprovalDAO.updateLeaveRequestStatus(conn, request.getLeaveRequestId(), status);
+            
             if (!statusResult) {
                 throw new RuntimeException("휴가 상태 업데이트에 실패했습니다.");
             }
 
             if (status == CommonStatus.APPROVED) {
+            	AttendanceService as = new AttendanceService();
+            	//근태 기록 테이블 반영
+            	as.registerLeave(request.getEmployeeId(), request.getStartDate(),request.getEndDate(), request.getLeaveType());
+            	
                 LeavePolicy policy = LeaveFactory.getLeave(request.getLeaveType());
                 double deductionDays = policy.calculateDeduction(request.getStartDate(), request.getEndDate());
 

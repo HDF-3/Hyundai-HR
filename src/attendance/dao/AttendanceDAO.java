@@ -7,6 +7,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.sql.Timestamp;
 import java.sql.Types;
 import java.sql.Date;
 import java.time.LocalDate;
@@ -70,7 +71,9 @@ public class AttendanceDAO {
 		ResultSet rs = null;
 		List<NormalAttendanceDTO> list = new ArrayList<>();
 		
-		String sql = "select * from attendance where WORK_DATE BETWEEN ? and ?";
+		String sql = 	"select * "
+				+ 		"from attendance "
+				+ 		"where WORK_DATE BETWEEN ? and ?";
 		
 		try {
 			pstmt = conn.prepareStatement(sql);
@@ -235,6 +238,57 @@ public class AttendanceDAO {
 			ConnectionHelper.close(conn);
 		}
 	}
+	public List<MissingAttendanceDTO> findMissingAttenDances(Long empId, LocalDate sDate, LocalDate eDate) {
+		Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		List<MissingAttendanceDTO> list = new ArrayList<>();
+		
+		String sql = 	"select * "
+				+ 		"from MISSING_PUNCH p "
+				+ 		"join MISSING_PUNCH_REASON r "
+				+ 		"	on p.missing_reason_id = r.missing_reason_id "
+				+ 		"join attendance a "
+				+ 		"	on p.emp_id = a.emp_id AND p.work_date = a.work_date "
+				+ 		"where a.work_date between ? and ? "
+				+ 		"	AND p.emp_id = ?";
+		
+		try {
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setDate(1,  java.sql.Date.valueOf(sDate));
+			pstmt.setDate(2, java.sql.Date.valueOf(eDate));
+			pstmt.setLong(3, empId);
+			rs = pstmt.executeQuery();
+			
+			if(rs.next()) {
+				do {
+					list.add(
+						    new MissingAttendanceDTO(
+						        rs.getLong("EMP_ID"),
+						        rs.getDate("WORK_DATE").toLocalDate(),
+						        rs.getTimestamp("ON_WORK_TIME") == null
+						            ? null
+						            : rs.getTimestamp("ON_WORK_TIME").toLocalDateTime().toLocalTime(),
+						        rs.getTimestamp("OFF_WORK_TIME") == null
+						            ? null
+						            : rs.getTimestamp("OFF_WORK_TIME").toLocalDateTime().toLocalTime(),
+						        rs.getString("IS_CLOSED"),
+						        rs.getString("MISSING_TYPE"),
+						        rs.getString("MISSING_REASON")
+						    )
+						);
+				}while(rs.next());
+			}
+			return list;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}finally {
+			ConnectionHelper.close(rs);
+			ConnectionHelper.close(pstmt);
+			ConnectionHelper.close(conn);
+		}
+	}
 	public List<MissingAttendanceDTO> findMissingAttenDances(LocalDate sDate, LocalDate eDate) {
 		Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
 		PreparedStatement pstmt = null;
@@ -330,34 +384,34 @@ public class AttendanceDAO {
 		PreparedStatement pstmt = null;
 		int result =-1;
 		
-		String sql = "MERGE INTO ATTENDANCE a "
-		        + "USING ( "
-		        + "    SELECT ? AS emp_id, "
-		        + "           TRUNC(SYSDATE) AS work_date, "
-		        + "           CAST(SYSTIMESTAMP AS TIMESTAMP) AS now_time "
-		        + "    FROM dual "
-		        + ") src "
-		        + "ON ( "
-		        + "    a.emp_id = src.emp_id "
-		        + "    AND a.work_date = src.work_date "
-		        + ") "
-		        + "WHEN MATCHED THEN "
-		        + "    UPDATE SET "
-		        + "        a.off_work_time = src.now_time "
-		        + "    WHERE a.off_work_time IS NULL "
-		        + "WHEN NOT MATCHED THEN "
-		        + "    INSERT ( "
-		        + "        emp_id, "
-		        + "        work_date, "
-		        + "        on_work_time, "
-		        + "        is_closed "
-		        + "    ) "
-		        + "    VALUES ( "
-		        + "        src.emp_id, "
-		        + "        src.work_date, "
-		        + "        src.now_time, "
-		        + "        'N' "
-		        + "    )";
+		String sql = 	"MERGE INTO ATTENDANCE a "
+		        + 		"USING ( "
+		        + 		"SELECT ? AS emp_id, "
+		        +		"		TRUNC(SYSDATE) AS work_date, "
+		        + 		"		CAST(SYSTIMESTAMP AS TIMESTAMP) AS now_time "
+		        + 		"FROM dual "
+		        + 		") src "
+		        + 		"ON ( "
+		        + 		"a.emp_id = src.emp_id "
+		        +		"AND a.work_date = src.work_date "
+		        + 		") "
+		        + 		"WHEN MATCHED THEN "
+		        + 		"UPDATE SET "
+		        +		"a.off_work_time = src.now_time "
+		        + 		"WHERE a.off_work_time IS NULL "
+		        + 		"WHEN NOT MATCHED THEN "
+		        + 		"INSERT ( "
+		        + 		"emp_id, "
+		        +		"work_date, "
+		        + 		"on_work_time, "
+		        + 		"is_closed "
+		        + 		") "
+		        + 		"VALUES ( "
+		        + 		"src.emp_id, "
+		        + 		"src.work_date, "
+		        + 		"src.now_time, "
+		        + 		"'N' "
+		        + 		")";
 		
 		try {
 			pstmt = conn.prepareStatement(sql);
@@ -464,55 +518,126 @@ public class AttendanceDAO {
 		}
 	}
 	
-	public int insertLeave(Long empId, LocalDate d, int lt){
-		Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
-		PreparedStatement pstmt = null;
-		int result =-1;
-		String sql = 	"INSERT INTO attendance (emp_id, work_date, on_work_time, off_work_time, is_closed ) "
-				+ 		"values(?,?,?,?,?)";
-		String sql2 = 	"INSERT INTO missing_punch (emp_id, work_date, missing_reason_id) "
-				+ 		"values(?,?,?)";
+//	public int insertLeave(Long empId, LocalDate d, int lt){
+//		Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
+//		PreparedStatement pstmt = null;
+//		int result =-1;
+//		String sql = 	"INSERT INTO attendance (emp_id, work_date, on_work_time, off_work_time, is_closed ) "
+//				+ 		"values(?,?,?,?,?)";
+//		String sql2 = 	"INSERT INTO missing_punch (emp_id, work_date, missing_reason_id) "
+//				+ 		"values(?,?,?)";
+//
+//		try {
+//			conn.setAutoCommit(false); //트랜잭션 위함
+//			pstmt = conn.prepareStatement(sql);
+//			pstmt.setLong(1, empId);
+//			pstmt.setDate(2,  Date.valueOf(d));
+//			pstmt.setDate(3,  Date.valueOf(d));
+//			pstmt.setDate(4,  Date.valueOf(d));
+//			pstmt.setString(5, "N");
+//			result = pstmt.executeUpdate();
+//			
+//			pstmt = conn.prepareStatement(sql2);
+//			pstmt.setLong(1, empId);
+//			pstmt.setDate(2,  Date.valueOf(d));
+//			pstmt.setInt(3, lt);
+//			result = pstmt.executeUpdate();
+//			
+//			conn.commit();
+//			return result;	
+//		}catch(SQLIntegrityConstraintViolationException e) {
+//			return -2;
+//		}catch (SQLException e) {
+//			e.printStackTrace();
+//			try {
+//				conn.rollback();
+//			} catch (SQLException e1) {
+//				e1.printStackTrace();
+//			}
+//			return result;
+//		}finally {
+//			ConnectionHelper.close(pstmt);
+//			ConnectionHelper.close(conn);
+//		}
+//	}
+	
+	public int insertLeaveRange(Long empId, List<LocalDate> dates, int reasonId) {
+	    Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
+	    PreparedStatement pstmt1 = null;
+	    PreparedStatement pstmt2 = null;
 
-		try {
-			conn.setAutoCommit(false); //트랜잭션 위함
-			pstmt = conn.prepareStatement(sql);
-			pstmt.setLong(1, empId);
-			pstmt.setDate(2,  Date.valueOf(d));
-			pstmt.setDate(3,  Date.valueOf(d));
-			pstmt.setDate(4,  Date.valueOf(d));
-			pstmt.setString(5, "N");
-			result = pstmt.executeUpdate();
-			
-			pstmt = conn.prepareStatement(sql2);
-			pstmt.setLong(1, empId);
-			pstmt.setDate(2,  Date.valueOf(d));
-			pstmt.setInt(3, lt);
-			result = pstmt.executeUpdate();
-			
-			conn.commit();
-			return result;	
-		}catch(SQLIntegrityConstraintViolationException e) {
-			return -2;
-		}catch (SQLException e) {
-			e.printStackTrace();
-			try {
-				conn.rollback();
-			} catch (SQLException e1) {
-				e1.printStackTrace();
-			}
-			return result;
-		}finally {
-			ConnectionHelper.close(pstmt);
-			ConnectionHelper.close(conn);
-		}
+	    int total = 0;
+
+	    String sql1 = """
+	    	    INSERT INTO attendance (
+	    	        emp_id,
+	    	        work_date,
+	    	        on_work_time,
+	    	        off_work_time,
+	    	        is_closed
+	    	    ) VALUES (?, ?, NULL, NULL, ?)
+	    	""";
+
+	    String sql2 = """
+	        INSERT INTO missing_punch (
+	            emp_id,
+	            work_date,
+	            missing_reason_id
+	        ) VALUES (?, ?, ?)
+	    """;
+
+	    try {
+	        conn.setAutoCommit(false);
+
+	        pstmt1 = conn.prepareStatement(sql1);
+	        pstmt2 = conn.prepareStatement(sql2);
+
+	        for (LocalDate date : dates) {
+	        	pstmt1.setLong(1, empId);
+	        	pstmt1.setDate(2, Date.valueOf(date));
+	        	pstmt1.setString(3, "N");
+	            total += pstmt1.executeUpdate();
+
+	            pstmt2.setLong(1, empId);
+	            pstmt2.setDate(2, Date.valueOf(date));
+	            pstmt2.setInt(3, reasonId);
+	            total += pstmt2.executeUpdate();
+	        }
+
+	        conn.commit();
+	        return total;
+
+	    } catch (SQLIntegrityConstraintViolationException e) {
+	        try {
+	            conn.rollback();
+	        } catch (SQLException ex) {
+	            ex.printStackTrace();
+	        }
+	        return -2;
+
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	        try {
+	            conn.rollback();
+	        } catch (SQLException ex) {
+	            ex.printStackTrace();
+	        }
+	        return -1;
+	    } finally {
+	        ConnectionHelper.close(pstmt2);
+	        ConnectionHelper.close(pstmt1);
+	        ConnectionHelper.close(conn);
+	    }
 	}
 	
 	public int deleteLeave(Long empId, LocalDate d) {
 		Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
 		PreparedStatement pstmt = null;
 		int result =-1;
-		String sql = 	"DELETE FROM missing_punch WHERE emp_id=? AND work_date=?";
-		String sql2 = 	"DELETE FROM attendance WHERE emp_id=? AND work_date=?";
+		String sql = 	"DELETE FROM missing_punch"
+				+ 		"WHERE emp_id=? AND work_date=?";
+		String sql2 = 	"DELETE FROM attendance"
+				+ 		"WHERE emp_id=? AND work_date=?";
 
 		try {
 			conn.setAutoCommit(false); //트랜잭션 위함
