@@ -89,7 +89,8 @@ public class PayrollService {
     }
 
     public boolean payPayroll(YearMonth yearMonth) {
-        return payrollDAO.updatePayrollStatusByMonth(yearMonth, CommonStatus.PAID) > 0;
+        payrollProcedureDAO.callPayPayroll(yearMonth);
+        return true;
     }
 
     public boolean updateEarning(EarningDTO earning) {

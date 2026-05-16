@@ -31,4 +31,26 @@ public class PayrollProcedureDAO {
             ConnectionHelper.close(conn);
         }
     }
+
+    public void callPayPayroll(YearMonth yearMonth) {
+        Connection conn = null;
+        CallableStatement cstmt = null;
+
+        try {
+            conn = ConnectionHelper.getConnection(DBType.ORACLE);
+
+            String sql = "{ call PROC_PAYROLL_PAY(?) }";
+
+            cstmt = conn.prepareCall(sql);
+            cstmt.setDate(1, Date.valueOf(yearMonth.atDay(1)));
+
+            cstmt.execute();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to pay payroll.", e);
+        } finally {
+            ConnectionHelper.close(cstmt);
+            ConnectionHelper.close(conn);
+        }
+    }
 }
