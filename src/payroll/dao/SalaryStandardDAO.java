@@ -59,14 +59,13 @@ public class SalaryStandardDAO {
 
         try {
             conn = ConnectionHelper.getConnection(DBType.ORACLE);
-            String sql = "insert into salary_standard(salary_standard_id, position_id, pay_grade, base_salary) values(?,?,?,?)";
+            String sql = "insert into salary_standard(salary_standard_id, position_id, pay_grade, base_salary) values(SEQ_SALARY_STANDARD_ID.nextval,?,?,?)";
 
             pstmt = conn.prepareStatement(sql);
 
-            pstmt.setLong(1, salaryStandard.getSalaryStandardId());
-            pstmt.setLong(2, salaryStandard.getPositionId());
-            pstmt.setInt(3, salaryStandard.getPayGrade());
-            pstmt.setBigDecimal(4, salaryStandard.getBaseSalary());
+            pstmt.setLong(1, salaryStandard.getPositionId());
+            pstmt.setInt(2, salaryStandard.getPayGrade());
+            pstmt.setBigDecimal(3, salaryStandard.getBaseSalary());
 
             rowcount = pstmt.executeUpdate();
 

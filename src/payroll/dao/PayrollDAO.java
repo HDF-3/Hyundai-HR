@@ -141,19 +141,18 @@ public class PayrollDAO {
 
         try {
             conn = ConnectionHelper.getConnection(DBType.ORACLE);
-            String sql = "insert into payroll(payroll_id, employee_id, payroll_year_month, total_earnings, total_deductions, net_pay, confirmed_at, pay_date, status) values(?,?,?,?,?,?,?,?,?)";
+            String sql = "insert into payroll(payroll_id, employee_id, payroll_year_month, total_earnings, total_deductions, net_pay, confirmed_at, pay_date, status) values(SEQ_PAYROLL_ID.nextval,?,?,?,?,?,?,?,?)";
 
             pstmt = conn.prepareStatement(sql);
 
-            pstmt.setLong(1, payroll.getPayrollId());
-            pstmt.setLong(2, payroll.getEmployeeId());
-            pstmt.setDate(3, Date.valueOf(payroll.getPayrollYearMonth().atDay(1)));
-            pstmt.setBigDecimal(4, payroll.getTotalEarnings());
-            pstmt.setBigDecimal(5, payroll.getTotalDeductions());
-            pstmt.setBigDecimal(6, payroll.getNetPay());
-            setNullableDate(pstmt, 7, payroll.getConfirmedAt());
-            setNullableDate(pstmt, 8, payroll.getPayDate());
-            pstmt.setString(9, payroll.getStatus().name());
+            pstmt.setLong(1, payroll.getEmployeeId());
+            pstmt.setDate(2, Date.valueOf(payroll.getPayrollYearMonth().atDay(1)));
+            pstmt.setBigDecimal(3, payroll.getTotalEarnings());
+            pstmt.setBigDecimal(4, payroll.getTotalDeductions());
+            pstmt.setBigDecimal(5, payroll.getNetPay());
+            setNullableDate(pstmt, 6, payroll.getConfirmedAt());
+            setNullableDate(pstmt, 7, payroll.getPayDate());
+            pstmt.setString(8, payroll.getStatus().name());
 
             rowcount = pstmt.executeUpdate();
 
