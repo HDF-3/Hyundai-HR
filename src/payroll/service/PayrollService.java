@@ -128,6 +128,25 @@ public class PayrollService {
         }
     }
 
+    public boolean updatePayrollDetail(EarningDTO earning, DeductionDTO deduction) {
+        Connection conn = null;
+
+        try {
+            conn = openTransaction();
+            int earningRowcount = earningDAO.updateEarning(earning, conn);
+            int deductionRowcount = deductionDAO.updateDeduction(deduction, conn);
+
+            conn.commit();
+            return earningRowcount > 0 && deductionRowcount > 0;
+
+        } catch (Exception e) {
+            rollback(conn);
+            throw new RuntimeException("Failed to update payroll detail.", e);
+        } finally {
+            ConnectionHelper.close(conn);
+        }
+    }
+
     public List<AdditionalAllowanceDTO> getAdditionalAllowanceList(Long employeeId, YearMonth yearMonth) {
         return additionalAllowanceDAO.findAdditionalAllowanceList(employeeId, yearMonth);
     }
