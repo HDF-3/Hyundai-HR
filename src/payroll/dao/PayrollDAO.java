@@ -1,0 +1,368 @@
+package payroll.dao;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Date;
+import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.ArrayList;
+import java.util.List;
+
+import global.types.CommonStatus;
+import global.types.DBType;
+import global.utils.ConnectionHelper;
+import payroll.dto.PayrollDTO;
+
+public class PayrollDAO {
+
+    private PayrollDTO mapPayroll(ResultSet rs) throws Exception {
+        PayrollDTO payroll = new PayrollDTO();
+
+        payroll.setPayrollId(rs.getLong("payroll_id"));
+        payroll.setEmployeeId(rs.getLong("employee_id"));
+        payroll.setPayrollYearMonth(YearMonth.from(rs.getDate("payroll_year_month").toLocalDate()));
+        payroll.setTotalEarnings(rs.getBigDecimal("total_earnings"));
+        payroll.setTotalDeductions(rs.getBigDecimal("total_deductions"));
+        payroll.setNetPay(rs.getBigDecimal("net_pay"));
+
+        Date confirmedAt = rs.getDate("confirmed_at");
+        Date paidAt = rs.getDate("paid_at");
+
+        payroll.setConfirmedAt(confirmedAt == null ? null : confirmedAt.toLocalDate());
+        payroll.setPaidAt(paidAt == null ? null : paidAt.toLocalDate());
+        payroll.setStatus(CommonStatus.valueOf(rs.getString("status")));
+
+        return payroll;
+    }
+
+    private void setNullableDate(PreparedStatement pstmt, int parameterIndex, LocalDate date) throws SQLException {
+        if (date == null) {
+            pstmt.setNull(parameterIndex, java.sql.Types.DATE);
+            return;
+        }
+
+        pstmt.setDate(parameterIndex, Date.valueOf(date));
+    }
+
+   
+    public PayrollDTO findPayroll(Long payrollId) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        PayrollDTO payroll = null;
+
+        try {
+            conn = ConnectionHelper.getConnection(DBType.ORACLE);
+            String sql = "select payroll_id, employee_id, payroll_year_month, total_earnings, total_deductions, net_pay, confirmed_at, paid_at, status from payroll where payroll_id=?";
+
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setLong(1, payrollId);
+            rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                payroll = mapPayroll(rs);
+            }
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        } finally {
+            ConnectionHelper.close(rs);
+            ConnectionHelper.close(pstmt);
+            ConnectionHelper.close(conn);
+        }
+
+        return payroll;
+    }
+
+    public List<PayrollDTO> findPayrollList(YearMonth payrollYearMonth) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        List<PayrollDTO> payrollList = new ArrayList<PayrollDTO>();
+
+        try {
+            conn = ConnectionHelper.getConnection(DBType.ORACLE);
+            String sql = "select payroll_id, employee_id, payroll_year_month, total_earnings, total_deductions, net_pay, confirmed_at, paid_at, status from payroll where payroll_year_month=? order by employee_id";
+
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setDate(1, Date.valueOf(payrollYearMonth.atDay(1)));
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                payrollList.add(mapPayroll(rs));
+            }
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        } finally {
+            ConnectionHelper.close(rs);
+            ConnectionHelper.close(pstmt);
+            ConnectionHelper.close(conn);
+        }
+
+        return payrollList;
+    }
+
+    public List<PayrollDTO> findPayrollList(Long employeeId) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        List<PayrollDTO> payrollList = new ArrayList<PayrollDTO>();
+
+        try {
+            conn = ConnectionHelper.getConnection(DBType.ORACLE);
+            String sql = "select payroll_id, employee_id, payroll_year_month, total_earnings, total_deductions, net_pay, confirmed_at, paid_at, status from payroll where employee_id=? order by payroll_year_month desc";
+
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setLong(1, employeeId);
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                payrollList.add(mapPayroll(rs));
+            }
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        } finally {
+            ConnectionHelper.close(rs);
+            ConnectionHelper.close(pstmt);
+            ConnectionHelper.close(conn);
+        }
+
+        return payrollList;
+    }
+
+    public List<PayrollDTO> searchPayrollList(
+            YearMonth payrollYearMonth,
+            CommonStatus status,
+            Long deptId,
+            Long positionId,
+            Long employeeId
+    ) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        List<PayrollDTO> payrollList = new ArrayList<PayrollDTO>();
+
+        try {
+            conn = ConnectionHelper.getConnection(DBType.ORACLE);
+
+            StringBuilder sql = new StringBuilder();
+            List<Object> parameters = new ArrayList<Object>();
+
+            sql.append("select p.payroll_id, p.employee_id, p.payroll_year_month, ");
+            sql.append("p.total_earnings, p.total_deductions, p.net_pay, ");
+            sql.append("p.confirmed_at, p.paid_at, p.status ");
+            sql.append("from payroll p ");
+            sql.append("join employee e on p.employee_id = e.emp_id ");
+            sql.append("where 1=1 ");
+
+            if (payrollYearMonth != null) {
+                sql.append("and p.payroll_year_month = ? ");
+                parameters.add(Date.valueOf(payrollYearMonth.atDay(1)));
+            }
+
+            if (status != null) {
+                sql.append("and p.status = ? ");
+                parameters.add(status.name());
+            }
+
+            if (deptId != null) {
+                sql.append("and e.dept_id = ? ");
+                parameters.add(deptId);
+            }
+
+            if (positionId != null) {
+                sql.append("and e.position_id = ? ");
+                parameters.add(positionId);
+            }
+
+            if (employeeId != null) {
+                sql.append("and e.emp_id = ? ");
+                parameters.add(employeeId);
+            }
+
+            sql.append("order by p.payroll_year_month desc, p.employee_id");
+
+            pstmt = conn.prepareStatement(sql.toString());
+
+            for (int i = 0; i < parameters.size(); i++) {
+                Object parameter = parameters.get(i);
+
+                if (parameter instanceof Date) {
+                    pstmt.setDate(i + 1, (Date) parameter);
+                } else if (parameter instanceof Long) {
+                    pstmt.setLong(i + 1, (Long) parameter);
+                } else {
+                    pstmt.setString(i + 1, parameter.toString());
+                }
+            }
+
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                payrollList.add(mapPayroll(rs));
+            }
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        } finally {
+            ConnectionHelper.close(rs);
+            ConnectionHelper.close(pstmt);
+            ConnectionHelper.close(conn);
+        }
+
+        return payrollList;
+    }
+
+    public int insertPayroll(PayrollDTO payroll) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        int rowcount = 0;
+
+        try {
+            conn = ConnectionHelper.getConnection(DBType.ORACLE);
+            String sql = "insert into payroll(payroll_id, employee_id, payroll_year_month, total_earnings, total_deductions, net_pay, confirmed_at, paid_at, status) values(SEQ_PAYROLL_ID.nextval,?,?,?,?,?,?,?,?)";
+
+            pstmt = conn.prepareStatement(sql);
+
+            pstmt.setLong(1, payroll.getEmployeeId());
+            pstmt.setDate(2, Date.valueOf(payroll.getPayrollYearMonth().atDay(1)));
+            pstmt.setBigDecimal(3, payroll.getTotalEarnings());
+            pstmt.setBigDecimal(4, payroll.getTotalDeductions());
+            pstmt.setBigDecimal(5, payroll.getNetPay());
+            setNullableDate(pstmt, 6, payroll.getConfirmedAt());
+            setNullableDate(pstmt, 7, payroll.getPaidAt());
+            pstmt.setString(8, payroll.getStatus().name());
+
+            rowcount = pstmt.executeUpdate();
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        } finally {
+            ConnectionHelper.close(pstmt);
+            ConnectionHelper.close(conn);
+        }
+
+        return rowcount;
+    }
+
+    public int updatePayroll(PayrollDTO payroll) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        int rowcount = 0;
+
+        try {
+            conn = ConnectionHelper.getConnection(DBType.ORACLE);
+            String sql = "update payroll set employee_id=?, payroll_year_month=?, total_earnings=?, total_deductions=?, net_pay=?, confirmed_at=?, paid_at=?, status=? where payroll_id=?";
+
+            pstmt = conn.prepareStatement(sql);
+
+            pstmt.setLong(1, payroll.getEmployeeId());
+            pstmt.setDate(2, Date.valueOf(payroll.getPayrollYearMonth().atDay(1)));
+            pstmt.setBigDecimal(3, payroll.getTotalEarnings());
+            pstmt.setBigDecimal(4, payroll.getTotalDeductions());
+            pstmt.setBigDecimal(5, payroll.getNetPay());
+            setNullableDate(pstmt, 6, payroll.getConfirmedAt());
+            setNullableDate(pstmt, 7, payroll.getPaidAt());
+            pstmt.setString(8, payroll.getStatus().name());
+            pstmt.setLong(9, payroll.getPayrollId());
+
+            rowcount = pstmt.executeUpdate();
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        } finally {
+            ConnectionHelper.close(pstmt);
+            ConnectionHelper.close(conn);
+        }
+
+        return rowcount;
+    }
+    
+    public int updatePayrollStatusByMonth(YearMonth yearMonth, CommonStatus status) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        int rowcount = 0;
+
+        try {
+            conn = ConnectionHelper.getConnection(DBType.ORACLE);
+            String sql = "update payroll set status=? where payroll_year_month=?";
+
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, status.name());
+            pstmt.setDate(2, Date.valueOf(yearMonth.atDay(1)));
+
+            rowcount = pstmt.executeUpdate();
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        } finally {
+            ConnectionHelper.close(pstmt);
+            ConnectionHelper.close(conn);
+        }
+
+        return rowcount;
+    }
+
+    public int updatePayrollStatus(Long payrollId, CommonStatus status) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        int rowcount = 0;
+
+        try {
+            conn = ConnectionHelper.getConnection(DBType.ORACLE);
+            String sql = "update payroll set status=? where payroll_id=?";
+
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, status.name());
+            pstmt.setLong(2, payrollId);
+
+            rowcount = pstmt.executeUpdate();
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        } finally {
+            ConnectionHelper.close(pstmt);
+            ConnectionHelper.close(conn);
+        }
+
+        return rowcount;
+    }
+
+    public int updatePayrollStatus(Long payrollId, CommonStatus status, Connection conn) throws SQLException {
+        PreparedStatement pstmt = null;
+
+        try {
+            String sql = "update payroll set status=? where payroll_id=?";
+
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, status.name());
+            pstmt.setLong(2, payrollId);
+
+            return pstmt.executeUpdate();
+
+        } finally {
+            ConnectionHelper.close(pstmt);
+        }
+    }
+
+    public int deletePayroll(Long payrollId, Connection conn) throws SQLException {
+        PreparedStatement pstmt = null;
+
+        try {
+            String sql = "delete from payroll where payroll_id=?";
+
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setLong(1, payrollId);
+
+            return pstmt.executeUpdate();
+
+        } finally {
+            ConnectionHelper.close(pstmt);
+        }
+    }
+
+}

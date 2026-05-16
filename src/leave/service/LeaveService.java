@@ -36,7 +36,6 @@ public class LeaveService {
 
         printAnnualLeave(leaveDTO);
     }
-    // 휴가 신청
     public List<AnnualLeaveDTO> getAnnualLeaveRows(Long employeeId) {
         return leaveDAO.findAnnualLeaveListByEmployeeId(employeeId);
     }
@@ -53,6 +52,7 @@ public class LeaveService {
         return leaveApprovalDAO.findPendingRequest(adminId);
     }
 
+    // 휴가 신청
     public boolean requestLeave(LeaveRequestDTO leaveRequestDTO) {
         try {
             Long employeeId = leaveRequestDTO.getEmployeeId();
@@ -143,7 +143,6 @@ public class LeaveService {
             }
 
             boolean statusResult = leaveApprovalDAO.updateLeaveRequestStatus(conn, request.getLeaveRequestId(), status);
-            
             if (!statusResult) {
                 throw new RuntimeException("휴가 상태 업데이트에 실패했습니다.");
             }
