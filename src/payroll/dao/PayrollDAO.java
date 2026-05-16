@@ -249,47 +249,6 @@ public class PayrollDAO {
         return rowcount;
     }
 
-    public int refreshPayrollTotal(Long payrollId) {
-        Connection conn = null;
-        PreparedStatement pstmt = null;
-        int rowcount = 0;
-
-        try {
-            conn = ConnectionHelper.getConnection(DBType.ORACLE);
-            String sql = "update payroll p "
-                    + "set (total_earnings, total_deductions, net_pay) = ( "
-                    + "    select "
-                    + "        e.base_salary + e.overtime_pay + e.transportation_allowance + e.performance_bonus + e.additional_allowance, "
-                    + "        d.national_pension + d.health_insurance + d.long_term_care_insurance + d.employment_insurance + d.income_tax + d.local_income_tax, "
-                    + "        (e.base_salary + e.overtime_pay + e.transportation_allowance + e.performance_bonus + e.additional_allowance) "
-                    + "        - (d.national_pension + d.health_insurance + d.long_term_care_insurance + d.employment_insurance + d.income_tax + d.local_income_tax) "
-                    + "    from earning e "
-                    + "    join deduction d on d.payroll_id = e.payroll_id "
-                    + "    where e.payroll_id = p.payroll_id "
-                    + ") "
-                    + "where p.payroll_id=? "
-                    + "and exists ( "
-                    + "    select 1 "
-                    + "    from earning e "
-                    + "    join deduction d on d.payroll_id = e.payroll_id "
-                    + "    where e.payroll_id = p.payroll_id "
-                    + ")";
-
-            pstmt = conn.prepareStatement(sql);
-            pstmt.setLong(1, payrollId);
-
-            rowcount = pstmt.executeUpdate();
-
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        } finally {
-            ConnectionHelper.close(pstmt);
-            ConnectionHelper.close(conn);
-        }
-
-        return rowcount;
-    }
-
     public int deletePayroll(Long payrollId, Connection conn) throws SQLException {
         PreparedStatement pstmt = null;
 
