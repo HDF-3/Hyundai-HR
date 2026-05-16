@@ -147,8 +147,13 @@ public class PayrollService {
             int earningRowcount = earningDAO.updateEarning(earning, conn);
             int deductionRowcount = deductionDAO.updateDeduction(deduction, conn);
 
+            if (earningRowcount != 1 || deductionRowcount != 1) {
+                rollback(conn);
+                return false;
+            }
+
             conn.commit();
-            return earningRowcount > 0 && deductionRowcount > 0;
+            return true;
 
         } catch (Exception e) {
             rollback(conn);
