@@ -59,3 +59,8 @@ target/
 
 ## properties ##
 src/resources/db.properties
+/.metadata/
+.metadata/
+**/.metadata/
+*.class
+bin/
