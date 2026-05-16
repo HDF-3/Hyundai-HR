@@ -249,6 +249,23 @@ public class PayrollDAO {
         return rowcount;
     }
 
+    public int updatePayrollStatus(Long payrollId, CommonStatus status, Connection conn) throws SQLException {
+        PreparedStatement pstmt = null;
+
+        try {
+            String sql = "update payroll set status=? where payroll_id=?";
+
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, status.name());
+            pstmt.setLong(2, payrollId);
+
+            return pstmt.executeUpdate();
+
+        } finally {
+            ConnectionHelper.close(pstmt);
+        }
+    }
+
     public int deletePayroll(Long payrollId, Connection conn) throws SQLException {
         PreparedStatement pstmt = null;
 

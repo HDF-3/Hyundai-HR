@@ -70,6 +70,24 @@ public class PayrollService {
         return payrollDAO.updatePayrollStatusByMonth(yearMonth, CommonStatus.CONFIRMED) > 0;
     }
 
+    public boolean confirmPayroll(Long payrollId) {
+        Connection conn = null;
+
+        try {
+            conn = openTransaction();
+            int rowcount = payrollDAO.updatePayrollStatus(payrollId, CommonStatus.CONFIRMED, conn);
+
+            conn.commit();
+            return rowcount > 0;
+
+        } catch (Exception e) {
+            rollback(conn);
+            throw new RuntimeException("Failed to confirm payroll.", e);
+        } finally {
+            ConnectionHelper.close(conn);
+        }
+    }
+
     public boolean payPayroll(YearMonth yearMonth) {
         return payrollDAO.updatePayrollStatusByMonth(yearMonth, CommonStatus.PAID) > 0;
     }
