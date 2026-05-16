@@ -26,6 +26,10 @@ public class PerformanceEvaluationService {
             throw new IllegalArgumentException("평가 대상 직원을 찾을 수 없습니다.");
         }
 
+        if (!evaluator.getDeptId().equals(targetEmp.getDeptId())) {
+            throw new IllegalAccessException("인사평가는 같은 부서 소속 직원에게만 부여할 수 있습니다.");
+        }
+
         return performanceEvaluationDAO.insertPerformanceEvaluation(evalDTO) > 0;
     }
 
