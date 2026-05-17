@@ -33,7 +33,7 @@ public class AttendancePanel extends JPanel implements Refreshable {
     private final AttendanceService attendanceService = new AttendanceService();
     private final AttendanceModifyService modifyService = new AttendanceModifyService();
 
-    private final JTable attendanceTable = UiKit.table("구분", "사번", "근무일", "출근", "퇴근", "마감", "미타각 유형", "사유");
+    private final JTable attendanceTable = UiKit.table("구분", "사번", "근무일", "출근", "퇴근", "마감", "예외 유형", "사유");
     private final JTable modifyTable = UiKit.table("요청ID", "취소대상ID", "사번", "근무일", "상태", "기존 출근", "신규 출근", "기존 퇴근", "신규 퇴근");
     private final JLabel statusLabel = UiKit.statusLabel();
 
@@ -89,22 +89,20 @@ public class AttendancePanel extends JPanel implements Refreshable {
         myAll.addActionListener(e -> loadMyAll());
         JButton myNormal = UiKit.secondaryButton("내 정상");
         myNormal.addActionListener(e -> loadNormalByEmployee());
-        JButton myMissing = UiKit.secondaryButton("내 미타각");
+        JButton myMissing = UiKit.secondaryButton("내 예외");
         myMissing.addActionListener(e -> loadMissingByEmployee());
         JButton rangeAll = UiKit.secondaryButton("기간 전체");
         rangeAll.addActionListener(e -> loadAllByRange());
         JButton rangeNormal = UiKit.secondaryButton("기간 정상");
         rangeNormal.addActionListener(e -> loadNormalByRange());
-        JButton rangeMissing = UiKit.secondaryButton("기간 미타각");
+        JButton rangeMissing = UiKit.secondaryButton("기간 예외");
         rangeMissing.addActionListener(e -> loadMissingByRange());
-        JButton clock = UiKit.primaryButton("출근/퇴근 기록");
-        clock.addActionListener(e -> registerToday());
 
         JPanel body = new JPanel(new BorderLayout(0, 12));
         body.setOpaque(false);
         body.add(UiKit.section("조회 조건", filter), BorderLayout.NORTH);
         body.add(UiKit.scroll(attendanceTable), BorderLayout.CENTER);
-        body.add(UiKit.actions(myAll, myNormal, myMissing, rangeAll, rangeNormal, rangeMissing, clock), BorderLayout.SOUTH);
+        body.add(UiKit.actions(myAll, myNormal, myMissing, rangeAll, rangeNormal, rangeMissing), BorderLayout.SOUTH);
         return body;
     }
 
@@ -154,7 +152,7 @@ public class AttendancePanel extends JPanel implements Refreshable {
 
         JButton register = UiKit.primaryButton("근태 사유 등록");
         register.addActionListener(e -> registerLeaveAttendance());
-        JPanel body = UiKit.section("승인된 휴가/외근 등의 미타각 사유를 근태에 반영합니다.", form);
+        JPanel body = UiKit.section("승인된 휴가/외근 등의 근태 예외 사유를 근태에 반영합니다.", form);
         body.add(UiKit.actions(register), BorderLayout.SOUTH);
         return body;
     }
@@ -179,28 +177,31 @@ public class AttendancePanel extends JPanel implements Refreshable {
         Long empId = readSearchEmpId();
         Async.run(this, () -> attendanceService.getMissingAttenDances(empId), rows -> {
             renderMissing(rows);
-            statusLabel.setText("미타각 근태: " + UiKit.safeSize(rows) + "건");
+            statusLabel.setText("근태 예외: " + UiKit.safeSize(rows) + "건");
         });
     }
 
     private void loadAllByRange() {
-        Async.run(this, () -> attendanceService.findAllAttenDances(UiKit.requireDate(startDateField, "시작일"), UiKit.requireDate(endDateField, "종료일")), rows -> {
+        Long empId = readSearchEmpId();
+        Async.run(this, () -> attendanceService.findAllAttenDances(empId, UiKit.requireDate(startDateField, "시작일"), UiKit.requireDate(endDateField, "종료일")), rows -> {
             renderNormal("전체", rows);
             statusLabel.setText("기간 전체: " + UiKit.safeSize(rows) + "건");
         });
     }
 
     private void loadNormalByRange() {
-        Async.run(this, () -> attendanceService.getNormalAttendances(UiKit.requireDate(startDateField, "시작일"), UiKit.requireDate(endDateField, "종료일")), rows -> {
+        Long empId = readSearchEmpId();
+        Async.run(this, () -> attendanceService.getNormalAttendances(empId, UiKit.requireDate(startDateField, "시작일"), UiKit.requireDate(endDateField, "종료일")), rows -> {
             renderNormal("정상", rows);
             statusLabel.setText("기간 정상: " + UiKit.safeSize(rows) + "건");
         });
     }
 
     private void loadMissingByRange() {
-        Async.run(this, () -> attendanceService.getMissingAttenDances(UiKit.requireDate(startDateField, "시작일"), UiKit.requireDate(endDateField, "종료일")), rows -> {
+        Long empId = readSearchEmpId();
+        Async.run(this, () -> attendanceService.getMissingAttenDances(empId, UiKit.requireDate(startDateField, "시작일"), UiKit.requireDate(endDateField, "종료일")), rows -> {
             renderMissing(rows);
-            statusLabel.setText("기간 미타각: " + UiKit.safeSize(rows) + "건");
+            statusLabel.setText("기간 예외: " + UiKit.safeSize(rows) + "건");
         });
     }
 
@@ -223,7 +224,7 @@ public class AttendancePanel extends JPanel implements Refreshable {
         List<Object[]> tableRows = new ArrayList<>();
         for (MissingAttendanceDTO row : UiKit.safeList(rows)) {
             tableRows.add(new Object[] {
-                    "미타각",
+                    "예외",
                     row.getEmpId(),
                     row.getWorkDate(),
                     UiKit.formatTime(row.getOnWorkTime()),
@@ -234,13 +235,6 @@ public class AttendancePanel extends JPanel implements Refreshable {
             });
         }
         UiKit.setRows(attendanceTable, tableRows);
-    }
-
-    private void registerToday() {
-        Async.run(this, () -> attendanceService.registerToday(session.getEmployeeId()), result -> {
-            statusLabel.setText("근태 기록 완료: " + result + "건");
-            loadMyAll();
-        });
     }
 
     private void requestWorkTime() {

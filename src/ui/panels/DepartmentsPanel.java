@@ -37,6 +37,7 @@ public class DepartmentsPanel extends JPanel implements Refreshable {
 
     public DepartmentsPanel() {
         setLayout(new BorderLayout());
+        UiKit.styleTree(organizationTree);
 
         JPanel page = UiKit.page("부서 관리", "부서 등록, 삭제, 조직도 확인을 처리합니다.");
 

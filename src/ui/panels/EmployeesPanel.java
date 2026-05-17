@@ -63,7 +63,7 @@ public class EmployeesPanel extends JPanel implements Refreshable {
     private final JTextField addressField = UiKit.field(24);
     private final JTextField accountField = UiKit.field(18);
     private final JTextField passwordField = UiKit.field(12);
-    private final JCheckBox adminCheck = new JCheckBox("관리자");
+    private final JCheckBox adminCheck = UiKit.checkBox("관리자");
 
     private EmployeeDTO selectedEmployee;
 
@@ -473,7 +473,7 @@ public class EmployeesPanel extends JPanel implements Refreshable {
         JTextField field = UiKit.field(18);
         field.setText(UiKit.value(value));
         field.setEditable(false);
-        field.setBackground(new java.awt.Color(248, 250, 252));
+        field.setBackground(UiKit.READONLY_BG);
         return field;
     }
 
