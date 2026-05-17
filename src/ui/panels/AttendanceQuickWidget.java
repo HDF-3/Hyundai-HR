@@ -12,6 +12,7 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
 import attendance.dto.NormalAttendanceDTO;
+import attendance.dto.RequestWorkTimeDTO;
 import attendance.service.AttendanceService;
 import ui.AppSession;
 import ui.Async;
@@ -30,6 +31,7 @@ public class AttendanceQuickWidget extends JPanel implements Refreshable {
 
     private final JLabel nameLabel = new JLabel();
     private final JLabel roleLabel = new JLabel();
+    private final JLabel workTimeLabel = new JLabel();
     private final JLabel stateLabel = new JLabel();
     private final JLabel onTimeLabel = new JLabel();
     private final JLabel offTimeLabel = new JLabel();
@@ -55,8 +57,10 @@ public class AttendanceQuickWidget extends JPanel implements Refreshable {
         nameLabel.setForeground(Color.WHITE);
         nameLabel.setFont(nameLabel.getFont().deriveFont(java.awt.Font.BOLD, 14f));
         roleLabel.setForeground(CARD_MUTED);
+        workTimeLabel.setForeground(CARD_MUTED);
         user.add(nameLabel);
         user.add(roleLabel);
+        user.add(workTimeLabel);
 
         JPanel attendance = new JPanel(new GridLayout(0, 1, 0, 5));
         attendance.setOpaque(false);
@@ -75,6 +79,7 @@ public class AttendanceQuickWidget extends JPanel implements Refreshable {
         add(actionButton, BorderLayout.SOUTH);
 
         renderUser();
+        renderWorkTime(null);
         renderAttendance(null);
     }
 
@@ -83,11 +88,13 @@ public class AttendanceQuickWidget extends JPanel implements Refreshable {
         Long employeeId = session.getEmployeeId();
         if (employeeId == null) {
             renderAttendance(null);
+            renderWorkTime(null);
             actionButton.setEnabled(false);
             return;
         }
 
         Async.run(this, () -> todayAttendanceFromExistingRows(employeeId), this::renderAttendance);
+        Async.run(this, () -> attendanceService.getAppliedWorkTime(employeeId), this::renderWorkTime);
     }
 
     private NormalAttendanceDTO todayAttendanceFromExistingRows(Long employeeId) {
@@ -103,6 +110,17 @@ public class AttendanceQuickWidget extends JPanel implements Refreshable {
     private void renderUser() {
         nameLabel.setText(session.getEmployeeName());
         roleLabel.setText((session.isAdmin() ? "관리자" : "일반 사용자") + " · " + session.getEmployeeId());
+    }
+
+    private void renderWorkTime(RequestWorkTimeDTO workTime) {
+        if (workTime == null || workTime.getOnWorkTime() == null || workTime.getOffWorkTime() == null) {
+            workTimeLabel.setText("근무시간 -");
+            return;
+        }
+        workTimeLabel.setText("근무시간 "
+                + UiKit.formatTime(workTime.getOnWorkTime())
+                + " - "
+                + UiKit.formatTime(workTime.getOffWorkTime()));
     }
 
     private void renderAttendance(NormalAttendanceDTO attendance) {

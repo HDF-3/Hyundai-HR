@@ -21,6 +21,10 @@ public class AttendanceService {
 	public AttendanceService() {
 		attendanceDAO = new AttendanceDAO();
 	}
+
+	public RequestWorkTimeDTO getAppliedWorkTime(Long empId) {
+		return attendanceDAO.findAppliedWorkTime(empId, LocalDate.now());
+	}
 	
 	public List<NormalAttendanceDTO> findAllAttenDances(Long empId){
 		return attendanceDAO.findAllAttenDances(empId);
@@ -130,26 +134,6 @@ public class AttendanceService {
 	    }
 	    return res;
 	}
-	
-	//연차 취소 메서드
-	/*
-	public int cancelLeave(Long empId, LocalDate d) {
-		if(LocalDate.now().isAfter(d) || LocalDate.now().equals(d)){
-	    	throw new RuntimeException("Leave 취소신청은 오늘 이후로만 신청이 가능합니다");
-		}
-		
-		int effectedRowNum = attendanceDAO.deleteLeave(empId, d);
-		
-		if(effectedRowNum==0) {
-	    	throw new RuntimeException("삭제할 정보가 없습니다");
-		}else if(effectedRowNum<0) {
-	    	throw new RuntimeException("SQL Exception 발생");
-		}else {
-			System.out.println("근태 정보 정상 삭제");
-			return effectedRowNum;
-		}
-	}
-	*/
 	
 	private int convertLeaveTypeToReasonId(LeaveType lt) {
 	    switch (lt) {

@@ -11,6 +11,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.sql.Date;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,6 +25,46 @@ import global.types.LeaveType;
 import global.utils.ConnectionHelper;
 
 public class AttendanceDAO {
+	public RequestWorkTimeDTO findAppliedWorkTime(Long empId, LocalDate workDate) {
+		Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		
+		String sql = "select emp_id, on_work_time, off_work_time "
+				+ "from work_time "
+				+ "where emp_id = ? "
+				+ "and applied_date = ( "
+				+ "    select min(applied_date) "
+				+ "    from work_time "
+				+ "    where emp_id = ? "
+				+ "    and applied_date >= ? "
+				+ ")";
+		
+		try {
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setLong(1, empId);
+			pstmt.setLong(2, empId);
+			pstmt.setDate(3, Date.valueOf(workDate));
+			rs = pstmt.executeQuery();
+			
+			if (rs.next()) {
+				return new RequestWorkTimeDTO(
+						rs.getLong("EMP_ID"),
+						YearMonth.from(workDate),
+						parseTime(rs.getString("ON_WORK_TIME")),
+						parseTime(rs.getString("OFF_WORK_TIME"))
+				);
+			}
+			return null;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		} finally {
+			ConnectionHelper.close(rs);
+			ConnectionHelper.close(pstmt);
+			ConnectionHelper.close(conn);
+		}
+	}
 
 	public List<NormalAttendanceDTO> findAllAttenDances(Long empId) {
 		Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
@@ -613,49 +654,6 @@ public class AttendanceDAO {
 		}
 	}
 	
-//	public int insertLeave(Long empId, LocalDate d, int lt){
-//		Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
-//		PreparedStatement pstmt = null;
-//		int result =-1;
-//		String sql = 	"INSERT INTO attendance (emp_id, work_date, on_work_time, off_work_time, is_closed ) "
-//				+ 		"values(?,?,?,?,?)";
-//		String sql2 = 	"INSERT INTO missing_punch (emp_id, work_date, missing_reason_id) "
-//				+ 		"values(?,?,?)";
-//
-//		try {
-//			conn.setAutoCommit(false); //트랜잭션 위함
-//			pstmt = conn.prepareStatement(sql);
-//			pstmt.setLong(1, empId);
-//			pstmt.setDate(2,  Date.valueOf(d));
-//			pstmt.setDate(3,  Date.valueOf(d));
-//			pstmt.setDate(4,  Date.valueOf(d));
-//			pstmt.setString(5, "N");
-//			result = pstmt.executeUpdate();
-//			
-//			pstmt = conn.prepareStatement(sql2);
-//			pstmt.setLong(1, empId);
-//			pstmt.setDate(2,  Date.valueOf(d));
-//			pstmt.setInt(3, lt);
-//			result = pstmt.executeUpdate();
-//			
-//			conn.commit();
-//			return result;	
-//		}catch(SQLIntegrityConstraintViolationException e) {
-//			return -2;
-//		}catch (SQLException e) {
-//			e.printStackTrace();
-//			try {
-//				conn.rollback();
-//			} catch (SQLException e1) {
-//				e1.printStackTrace();
-//			}
-//			return result;
-//		}finally {
-//			ConnectionHelper.close(pstmt);
-//			ConnectionHelper.close(conn);
-//		}
-//	}
-	
 	public int insertLeaveRange(Long empId, List<LocalDate> dates, int reasonId) {
 	    Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
 	    PreparedStatement pstmt1 = null;
@@ -756,5 +754,12 @@ public class AttendanceDAO {
 			ConnectionHelper.close(pstmt);
 			ConnectionHelper.close(conn);
 		}
+	}
+
+	private LocalTime parseTime(String value) {
+		if (value == null || value.trim().isEmpty()) {
+			return null;
+		}
+		return LocalTime.parse(value.trim());
 	}
 }
