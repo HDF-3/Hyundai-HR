@@ -77,7 +77,7 @@ public class ShellPanel extends JPanel {
         brand.setBorder(new EmptyBorder(0, 4, 8, 4));
         header.add(brand, BorderLayout.NORTH);
 
-        attendanceWidget = new AttendanceQuickWidget(session);
+        attendanceWidget = new AttendanceQuickWidget(session, this::refreshAttendancePanel);
         header.add(attendanceWidget, BorderLayout.CENTER);
 
         JPanel nav = new JPanel();
@@ -121,6 +121,13 @@ public class ShellPanel extends JPanel {
         button.setAlignmentX(LEFT_ALIGNMENT);
         button.addActionListener(e -> open(item.getRoute()));
         return button;
+    }
+
+    private void refreshAttendancePanel() {
+        JPanel panel = panels.get("attendance");
+        if (panel instanceof Refreshable) {
+            ((Refreshable) panel).refresh();
+        }
     }
 
     private void open(String route) {

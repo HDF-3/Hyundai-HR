@@ -97,14 +97,12 @@ public class AttendancePanel extends JPanel implements Refreshable {
         rangeNormal.addActionListener(e -> loadNormalByRange());
         JButton rangeMissing = UiKit.secondaryButton("기간 미타각");
         rangeMissing.addActionListener(e -> loadMissingByRange());
-        JButton clock = UiKit.primaryButton("출근/퇴근 기록");
-        clock.addActionListener(e -> registerToday());
 
         JPanel body = new JPanel(new BorderLayout(0, 12));
         body.setOpaque(false);
         body.add(UiKit.section("조회 조건", filter), BorderLayout.NORTH);
         body.add(UiKit.scroll(attendanceTable), BorderLayout.CENTER);
-        body.add(UiKit.actions(myAll, myNormal, myMissing, rangeAll, rangeNormal, rangeMissing, clock), BorderLayout.SOUTH);
+        body.add(UiKit.actions(myAll, myNormal, myMissing, rangeAll, rangeNormal, rangeMissing), BorderLayout.SOUTH);
         return body;
     }
 
@@ -184,21 +182,24 @@ public class AttendancePanel extends JPanel implements Refreshable {
     }
 
     private void loadAllByRange() {
-        Async.run(this, () -> attendanceService.findAllAttenDances(UiKit.requireDate(startDateField, "시작일"), UiKit.requireDate(endDateField, "종료일")), rows -> {
+        Long empId = readSearchEmpId();
+        Async.run(this, () -> attendanceService.findAllAttenDances(empId, UiKit.requireDate(startDateField, "시작일"), UiKit.requireDate(endDateField, "종료일")), rows -> {
             renderNormal("전체", rows);
             statusLabel.setText("기간 전체: " + UiKit.safeSize(rows) + "건");
         });
     }
 
     private void loadNormalByRange() {
-        Async.run(this, () -> attendanceService.getNormalAttendances(UiKit.requireDate(startDateField, "시작일"), UiKit.requireDate(endDateField, "종료일")), rows -> {
+        Long empId = readSearchEmpId();
+        Async.run(this, () -> attendanceService.getNormalAttendances(empId, UiKit.requireDate(startDateField, "시작일"), UiKit.requireDate(endDateField, "종료일")), rows -> {
             renderNormal("정상", rows);
             statusLabel.setText("기간 정상: " + UiKit.safeSize(rows) + "건");
         });
     }
 
     private void loadMissingByRange() {
-        Async.run(this, () -> attendanceService.getMissingAttenDances(UiKit.requireDate(startDateField, "시작일"), UiKit.requireDate(endDateField, "종료일")), rows -> {
+        Long empId = readSearchEmpId();
+        Async.run(this, () -> attendanceService.getMissingAttenDances(empId, UiKit.requireDate(startDateField, "시작일"), UiKit.requireDate(endDateField, "종료일")), rows -> {
             renderMissing(rows);
             statusLabel.setText("기간 미타각: " + UiKit.safeSize(rows) + "건");
         });
@@ -234,13 +235,6 @@ public class AttendancePanel extends JPanel implements Refreshable {
             });
         }
         UiKit.setRows(attendanceTable, tableRows);
-    }
-
-    private void registerToday() {
-        Async.run(this, () -> attendanceService.registerToday(session.getEmployeeId()), result -> {
-            statusLabel.setText("근태 기록 완료: " + result + "건");
-            loadMyAll();
-        });
     }
 
     private void requestWorkTime() {

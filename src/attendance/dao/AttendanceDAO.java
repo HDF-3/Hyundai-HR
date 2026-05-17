@@ -65,6 +65,53 @@ public class AttendanceDAO {
 			ConnectionHelper.close(conn);
 		}
 	}
+
+	public List<NormalAttendanceDTO> findAllAttenDances(Long empId, LocalDate sDate, LocalDate eDate) {
+		Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		List<NormalAttendanceDTO> list = new ArrayList<>();
+		
+		String sql = "select * "
+				+ "from attendance "
+				+ "where emp_id = ? "
+				+ "and work_date between ? and ?";
+		
+		try {
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setLong(1, empId);
+			pstmt.setDate(2, java.sql.Date.valueOf(sDate));
+			pstmt.setDate(3, java.sql.Date.valueOf(eDate));
+			rs = pstmt.executeQuery();
+			
+			if(rs.next()) {
+				do {
+					list.add(
+						    new NormalAttendanceDTO(
+						        rs.getLong("EMP_ID"),
+						        rs.getDate("WORK_DATE").toLocalDate(),
+						        rs.getTimestamp("ON_WORK_TIME") == null
+						            ? null
+						            : rs.getTimestamp("ON_WORK_TIME").toLocalDateTime().toLocalTime(),
+						        rs.getTimestamp("OFF_WORK_TIME") == null
+						            ? null
+						            : rs.getTimestamp("OFF_WORK_TIME").toLocalDateTime().toLocalTime(),
+						        rs.getString("IS_CLOSED")
+						    )
+						);
+				}while(rs.next());
+			}
+			return list;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}finally {
+			ConnectionHelper.close(rs);
+			ConnectionHelper.close(pstmt);
+			ConnectionHelper.close(conn);
+		}
+	}
+
 	public List<NormalAttendanceDTO> findAllAttenDances(LocalDate sDate, LocalDate eDate) {
 		Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
 		PreparedStatement pstmt = null;
@@ -115,9 +162,9 @@ public class AttendanceDAO {
 		ResultSet rs = null;
 		List<NormalAttendanceDTO> list = new ArrayList<>();
 		
-		String sql = "select * from attendance where emp_id = ?"
-				+ "AND on_work_time is not null "
-				+ "AND off_work_time is not null";
+		String sql = "select * from attendance where emp_id = ? "
+				+ "and on_work_time is not null "
+				+ "and off_work_time is not null";
 		try {
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setLong(1, empId);
@@ -150,15 +197,63 @@ public class AttendanceDAO {
 			ConnectionHelper.close(conn);
 		}
 	}
+
+	public List<NormalAttendanceDTO> findNormalAttenDances(Long empId, LocalDate sDate, LocalDate eDate) {
+		Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		List<NormalAttendanceDTO> list = new ArrayList<>();
+		
+		String sql = "select * from attendance "
+				+ "where emp_id = ? "
+				+ "and work_date between ? and ? "
+				+ "and on_work_time is not null "
+				+ "and off_work_time is not null";
+		
+		try {
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setLong(1, empId);
+			pstmt.setDate(2, java.sql.Date.valueOf(sDate));
+			pstmt.setDate(3, java.sql.Date.valueOf(eDate));
+			rs = pstmt.executeQuery();
+			
+			if(rs.next()) {
+				do {
+					list.add(
+						    new NormalAttendanceDTO(
+						        rs.getLong("EMP_ID"),
+						        rs.getDate("WORK_DATE").toLocalDate(),
+						        rs.getTimestamp("ON_WORK_TIME") == null
+						            ? null
+						            : rs.getTimestamp("ON_WORK_TIME").toLocalDateTime().toLocalTime(),
+						        rs.getTimestamp("OFF_WORK_TIME") == null
+						            ? null
+						            : rs.getTimestamp("OFF_WORK_TIME").toLocalDateTime().toLocalTime(),
+						        rs.getString("IS_CLOSED")
+						    )
+						);
+				}while(rs.next());
+			}
+			return list;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}finally {
+			ConnectionHelper.close(rs);
+			ConnectionHelper.close(pstmt);
+			ConnectionHelper.close(conn);
+		}
+	}
+
 	public List<NormalAttendanceDTO> findNormalAttenDances(LocalDate sDate, LocalDate eDate) {
 		Connection conn = ConnectionHelper.getConnection(DBType.ORACLE);
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		List<NormalAttendanceDTO> list = new ArrayList<>();
 		
-		String sql = "select * from attendance where WORK_DATE BETWEEN ? and ?"
-				+ "AND on_work_time is not null "
-				+ "AND off_work_time is not null";;
+		String sql = "select * from attendance where WORK_DATE BETWEEN ? and ? "
+				+ "and on_work_time is not null "
+				+ "and off_work_time is not null";;
 		
 		try {
 			pstmt = conn.prepareStatement(sql);

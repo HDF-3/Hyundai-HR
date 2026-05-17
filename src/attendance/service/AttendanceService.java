@@ -25,6 +25,10 @@ public class AttendanceService {
 	public List<NormalAttendanceDTO> findAllAttenDances(Long empId){
 		return attendanceDAO.findAllAttenDances(empId);
 	}
+
+	public List<NormalAttendanceDTO> findAllAttenDances(Long empId, LocalDate sDate, LocalDate eDate){
+		return attendanceDAO.findAllAttenDances(empId, sDate, eDate);
+	}
 	
 	public List<NormalAttendanceDTO> findAllAttenDances(LocalDate sDate, LocalDate eDate){
 		return attendanceDAO.findAllAttenDances(sDate, eDate);
@@ -33,9 +37,17 @@ public class AttendanceService {
 	public List<NormalAttendanceDTO> getNormalAttendances(Long empId){
 		return attendanceDAO.findNormalAttenDances(empId);
 	}
+
+	public List<NormalAttendanceDTO> getNormalAttendances(Long empId, LocalDate sDate, LocalDate eDate){
+		return attendanceDAO.findNormalAttenDances(empId, sDate, eDate);
+	}
 	
 	public List<MissingAttendanceDTO> getMissingAttenDances(Long empId){
 		return attendanceDAO.findMissingAttenDances(empId);
+	}
+
+	public List<MissingAttendanceDTO> getMissingAttenDances(Long empId, LocalDate sDate, LocalDate eDate){
+		return attendanceDAO.findMissingAttenDances(empId, sDate, eDate);
 	}
 	
 	public List<MissingAttendanceDTO> getMissingAttenDances(LocalDate sDate, LocalDate eDate){

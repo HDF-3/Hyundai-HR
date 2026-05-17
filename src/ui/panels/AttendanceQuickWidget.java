@@ -25,6 +25,7 @@ public class AttendanceQuickWidget extends JPanel implements Refreshable {
     private static final Color CARD_MUTED = new Color(168, 190, 214);
 
     private final AppSession session;
+    private final Runnable onAttendanceChanged;
     private final AttendanceService attendanceService = new AttendanceService();
 
     private final JLabel nameLabel = new JLabel();
@@ -35,7 +36,12 @@ public class AttendanceQuickWidget extends JPanel implements Refreshable {
     private final JButton actionButton = UiKit.primaryButton("출근하기");
 
     public AttendanceQuickWidget(AppSession session) {
+        this(session, null);
+    }
+
+    public AttendanceQuickWidget(AppSession session, Runnable onAttendanceChanged) {
         this.session = session;
+        this.onAttendanceChanged = onAttendanceChanged;
         setLayout(new BorderLayout(0, 12));
         setOpaque(true);
         setBackground(CARD_BG);
@@ -130,6 +136,11 @@ public class AttendanceQuickWidget extends JPanel implements Refreshable {
             return;
         }
 
-        Async.run(this, () -> attendanceService.registerToday(employeeId), ignored -> refresh());
+        Async.run(this, () -> attendanceService.registerToday(employeeId), ignored -> {
+            refresh();
+            if (onAttendanceChanged != null) {
+                onAttendanceChanged.run();
+            }
+        });
     }
 }
