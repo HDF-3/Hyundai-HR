@@ -24,7 +24,7 @@ public class LoginPanel extends JPanel {
     private final EmployeeService employeeService = new EmployeeService();
     private final Consumer<EmployeeDTO> onLogin;
     private final JTextField empIdField = UiKit.field(18);
-    private final JPasswordField passwordField = new JPasswordField(18);
+    private final JPasswordField passwordField = UiKit.passwordField(18);
     private final JLabel statusLabel = UiKit.statusLabel();
 
     public LoginPanel(Consumer<EmployeeDTO> onLogin) {
@@ -52,10 +52,6 @@ public class LoginPanel extends JPanel {
 
         JPanel form = UiKit.form();
         UiKit.addField(form, 0, "사번", empIdField);
-        passwordField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(UiKit.LINE),
-                new EmptyBorder(7, 9, 7, 9)
-        ));
         UiKit.addField(form, 1, "비밀번호", passwordField);
 
         JButton loginButton = UiKit.primaryButton("로그인");

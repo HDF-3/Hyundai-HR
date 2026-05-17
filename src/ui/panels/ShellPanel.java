@@ -110,9 +110,7 @@ public class ShellPanel extends JPanel {
 
     private JButton navButton(NavigationModel.Item item) {
         JButton button = new JButton(item.getLabel());
-        button.setFocusPainted(false);
-        button.setOpaque(true);
-        button.setContentAreaFilled(true);
+        UiKit.styleButton(button);
         button.setHorizontalAlignment(JButton.LEFT);
         button.setBorder(new EmptyBorder(10, 12, 10, 12));
         button.setForeground(new Color(219, 232, 245));

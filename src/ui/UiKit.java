@@ -24,6 +24,7 @@ import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -31,16 +32,21 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.JTree;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
+import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
+import javax.swing.plaf.basic.BasicButtonUI;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.text.JTextComponent;
 
 public final class UiKit {
     public static final Color BG = new Color(246, 248, 251);
@@ -51,11 +57,69 @@ public final class UiKit {
     public static final Color PRIMARY = new Color(10, 76, 153);
     public static final Color PRIMARY_DARK = new Color(6, 49, 103);
     public static final Color DANGER = new Color(190, 18, 60);
+    public static final Color FIELD_BG = SURFACE;
+    public static final Color READONLY_BG = new Color(248, 250, 252);
+    public static final Color HOVER_BG = new Color(234, 241, 249);
+    public static final Color TABLE_HEADER_BG = new Color(241, 245, 249);
+    public static final Color TABLE_ALT_BG = new Color(250, 252, 255);
+    public static final Color SELECTION_BG = PRIMARY;
+    public static final Color SELECTION_TEXT = Color.WHITE;
     public static final int FIELD_HEIGHT = 34;
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
 
     private UiKit() {
+    }
+
+    public static void installLookAndFeelDefaults() {
+        UIManager.put("Panel.background", BG);
+        UIManager.put("Viewport.background", SURFACE);
+        UIManager.put("Label.foreground", TEXT);
+        UIManager.put("Label.disabledForeground", MUTED);
+        UIManager.put("Button.background", SURFACE);
+        UIManager.put("Button.foreground", TEXT);
+        UIManager.put("Button.disabledText", MUTED);
+        UIManager.put("CheckBox.background", BG);
+        UIManager.put("CheckBox.foreground", TEXT);
+        UIManager.put("CheckBox.disabledText", MUTED);
+        UIManager.put("TextField.background", FIELD_BG);
+        UIManager.put("TextField.foreground", TEXT);
+        UIManager.put("TextField.caretForeground", TEXT);
+        UIManager.put("TextField.inactiveForeground", TEXT);
+        UIManager.put("TextField.disabledForeground", TEXT);
+        UIManager.put("TextField.selectionBackground", new Color(196, 221, 250));
+        UIManager.put("TextField.selectionForeground", TEXT);
+        UIManager.put("PasswordField.background", FIELD_BG);
+        UIManager.put("PasswordField.foreground", TEXT);
+        UIManager.put("PasswordField.caretForeground", TEXT);
+        UIManager.put("PasswordField.inactiveForeground", TEXT);
+        UIManager.put("PasswordField.disabledForeground", TEXT);
+        UIManager.put("PasswordField.selectionBackground", new Color(196, 221, 250));
+        UIManager.put("PasswordField.selectionForeground", TEXT);
+        UIManager.put("ComboBox.background", FIELD_BG);
+        UIManager.put("ComboBox.foreground", TEXT);
+        UIManager.put("ComboBox.disabledBackground", FIELD_BG);
+        UIManager.put("ComboBox.disabledForeground", MUTED);
+        UIManager.put("ComboBox.selectionBackground", SELECTION_BG);
+        UIManager.put("ComboBox.selectionForeground", SELECTION_TEXT);
+        UIManager.put("Table.background", SURFACE);
+        UIManager.put("Table.foreground", TEXT);
+        UIManager.put("Table.selectionBackground", SELECTION_BG);
+        UIManager.put("Table.selectionForeground", SELECTION_TEXT);
+        UIManager.put("Table.gridColor", new Color(232, 238, 246));
+        UIManager.put("TableHeader.background", TABLE_HEADER_BG);
+        UIManager.put("TableHeader.foreground", TEXT);
+        UIManager.put("TabbedPane.background", BG);
+        UIManager.put("TabbedPane.foreground", TEXT);
+        UIManager.put("TabbedPane.selected", SURFACE);
+        UIManager.put("Tree.background", SURFACE);
+        UIManager.put("Tree.foreground", TEXT);
+        UIManager.put("Tree.textBackground", SURFACE);
+        UIManager.put("Tree.textForeground", TEXT);
+        UIManager.put("Tree.selectionBackground", SELECTION_BG);
+        UIManager.put("Tree.selectionForeground", SELECTION_TEXT);
+        UIManager.put("OptionPane.background", BG);
+        UIManager.put("OptionPane.messageForeground", TEXT);
     }
 
     public static JPanel page(String title, String subtitle) {
@@ -124,10 +188,10 @@ public final class UiKit {
     }
 
     private static JButton baseButton(String text) {
-        JButton button = new JButton(text);
-        button.setFocusPainted(false);
-        button.setOpaque(true);
-        button.setContentAreaFilled(true);
+        JButton button = new PaletteButton(text);
+        styleButton(button);
+        button.setBackground(SURFACE);
+        button.setForeground(TEXT);
         button.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(197, 208, 224)),
                 new EmptyBorder(8, 13, 8, 13)
@@ -136,8 +200,93 @@ public final class UiKit {
         return button;
     }
 
+    private static final class PaletteButton extends JButton {
+        private Color enabledBackground;
+        private Color enabledForeground;
+        private boolean applyingPalette;
+
+        private PaletteButton(String text) {
+            super(text);
+        }
+
+        @Override
+        public void setBackground(Color background) {
+            super.setBackground(background);
+            if (!applyingPalette) {
+                enabledBackground = background;
+                if (!isEnabled()) {
+                    applyPalette();
+                }
+            }
+        }
+
+        @Override
+        public void setForeground(Color foreground) {
+            super.setForeground(foreground);
+            if (!applyingPalette) {
+                enabledForeground = foreground;
+                if (!isEnabled()) {
+                    applyPalette();
+                }
+            }
+        }
+
+        @Override
+        public void setEnabled(boolean enabled) {
+            super.setEnabled(enabled);
+            applyPalette();
+        }
+
+        private void applyPalette() {
+            applyingPalette = true;
+            if (isEnabled()) {
+                if (enabledBackground != null) {
+                    super.setBackground(enabledBackground);
+                }
+                if (enabledForeground != null) {
+                    super.setForeground(enabledForeground);
+                }
+            } else {
+                super.setBackground(new Color(226, 232, 240));
+                super.setForeground(new Color(71, 85, 105));
+            }
+            applyingPalette = false;
+        }
+    }
+
     public static JTextField field(int columns) {
         JTextField field = new JTextField(columns);
+        configureField(field, columns);
+        return field;
+    }
+
+    public static JPasswordField passwordField(int columns) {
+        JPasswordField field = new JPasswordField(columns);
+        configureField(field, columns);
+        return field;
+    }
+
+    public static void styleButton(JButton button) {
+        button.setUI(new BasicButtonUI());
+        button.setFocusPainted(false);
+        button.setOpaque(true);
+        button.setContentAreaFilled(true);
+        button.setBorderPainted(true);
+    }
+
+    public static <T extends JTextComponent> T styleTextComponent(T field) {
+        field.setOpaque(true);
+        field.setBackground(FIELD_BG);
+        field.setForeground(TEXT);
+        field.setCaretColor(TEXT);
+        field.setSelectionColor(new Color(196, 221, 250));
+        field.setSelectedTextColor(TEXT);
+        field.setDisabledTextColor(TEXT);
+        return field;
+    }
+
+    private static <T extends JTextComponent> T configureField(T field, int columns) {
+        styleTextComponent(field);
         field.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(LINE),
                 new EmptyBorder(7, 9, 7, 9)
@@ -170,7 +319,9 @@ public final class UiKit {
             ) {
                 JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 label.setBorder(new EmptyBorder(7, 9, 7, 9));
-                label.setForeground(isSelected ? list.getSelectionForeground() : TEXT);
+                label.setOpaque(true);
+                label.setBackground(isSelected ? SELECTION_BG : SURFACE);
+                label.setForeground(isSelected ? SELECTION_TEXT : (combo.isEnabled() ? TEXT : MUTED));
                 label.setVerticalAlignment(SwingConstants.CENTER);
                 label.setHorizontalAlignment(SwingConstants.LEFT);
                 label.setPreferredSize(new Dimension(label.getPreferredSize().width, FIELD_HEIGHT));
@@ -221,11 +372,8 @@ public final class UiKit {
         @Override
         protected JButton createArrowButton() {
             JButton button = new JButton("▼");
-            button.setFocusable(false);
-            button.setFocusPainted(false);
+            styleButton(button);
             button.setBorder(new EmptyBorder(0, 8, 0, 8));
-            button.setOpaque(true);
-            button.setContentAreaFilled(true);
             button.setBackground(SURFACE);
             button.setForeground(MUTED);
             button.setPreferredSize(new Dimension(30, FIELD_HEIGHT));
@@ -316,11 +464,33 @@ public final class UiKit {
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setFillsViewportHeight(true);
         table.setGridColor(new Color(232, 238, 246));
+        table.setBackground(SURFACE);
+        table.setForeground(TEXT);
+        table.setSelectionBackground(SELECTION_BG);
+        table.setSelectionForeground(SELECTION_TEXT);
         table.getTableHeader().setReorderingAllowed(false);
         table.getTableHeader().setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
-        table.getTableHeader().setForeground(MUTED);
+        table.getTableHeader().setOpaque(true);
+        table.getTableHeader().setBackground(TABLE_HEADER_BG);
+        table.getTableHeader().setForeground(TEXT);
 
         DefaultTableCellRenderer renderer = new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(
+                    JTable table,
+                    Object value,
+                    boolean isSelected,
+                    boolean hasFocus,
+                    int row,
+                    int column
+            ) {
+                Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                component.setBackground(isSelected ? table.getSelectionBackground() : (row % 2 == 0 ? SURFACE : TABLE_ALT_BG));
+                component.setForeground(isSelected ? table.getSelectionForeground() : TEXT);
+                setBorder(new EmptyBorder(0, 8, 0, 8));
+                return component;
+            }
+
             @Override
             protected void setValue(Object value) {
                 if (value instanceof LocalTime) {
@@ -330,7 +500,6 @@ public final class UiKit {
                 super.setValue(value);
             }
         };
-        renderer.setBorder(new EmptyBorder(0, 8, 0, 8));
         table.setDefaultRenderer(Object.class, renderer);
         return table;
     }
@@ -338,6 +507,7 @@ public final class UiKit {
     public static JScrollPane scroll(JTable table) {
         JScrollPane pane = new JScrollPane(table);
         pane.setBorder(BorderFactory.createLineBorder(LINE));
+        pane.getViewport().setBackground(SURFACE);
         return pane;
     }
 
@@ -381,6 +551,21 @@ public final class UiKit {
         JLabel label = new JLabel(" ");
         label.setForeground(MUTED);
         return label;
+    }
+
+    public static JCheckBox checkBox(String text) {
+        JCheckBox checkBox = new JCheckBox(text);
+        checkBox.setOpaque(false);
+        checkBox.setForeground(TEXT);
+        checkBox.setFocusPainted(false);
+        return checkBox;
+    }
+
+    public static void styleTree(JTree tree) {
+        tree.setOpaque(true);
+        tree.setBackground(SURFACE);
+        tree.setForeground(TEXT);
+        tree.setRowHeight(24);
     }
 
     public static JLabel metric(String title, String value) {
@@ -533,8 +718,7 @@ public final class UiKit {
 
             calendarButton = new JButton("▼");
             calendarButton.setToolTipText("달력 열기");
-            calendarButton.setFocusPainted(false);
-            calendarButton.setOpaque(true);
+            styleButton(calendarButton);
             calendarButton.setBackground(SURFACE);
             calendarButton.setForeground(PRIMARY_DARK);
             calendarButton.setPreferredSize(new Dimension(40, FIELD_HEIGHT));
@@ -630,7 +814,7 @@ public final class UiKit {
 
         private JButton calendarNavButton(String text) {
             JButton button = new JButton(text);
-            button.setFocusPainted(false);
+            styleButton(button);
             button.setPreferredSize(new Dimension(36, 30));
             button.setBorder(BorderFactory.createLineBorder(LINE));
             button.setBackground(SURFACE);
@@ -659,10 +843,10 @@ public final class UiKit {
             for (int day = 1; day <= visibleMonth.lengthOfMonth(); day++) {
                 LocalDate date = visibleMonth.atDay(day);
                 JButton button = new JButton(String.valueOf(day));
-                button.setFocusPainted(false);
+                styleButton(button);
                 button.setPreferredSize(new Dimension(36, 30));
                 button.setBorder(BorderFactory.createLineBorder(date.equals(selected) ? PRIMARY : LINE));
-                button.setBackground(date.equals(LocalDate.now()) ? new Color(234, 241, 249) : SURFACE);
+                button.setBackground(date.equals(LocalDate.now()) ? HOVER_BG : SURFACE);
                 button.setForeground(TEXT);
                 button.addActionListener(e -> {
                     setDate(date);

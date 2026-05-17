@@ -39,6 +39,7 @@ public class HyundaiHrApp extends JFrame {
             } catch (Exception ignored) {
                 // System look and feel is a visual enhancement, not a startup requirement.
             }
+            UiKit.installLookAndFeelDefaults();
             HyundaiHrApp app = new HyundaiHrApp();
             app.pack();
             app.setVisible(true);

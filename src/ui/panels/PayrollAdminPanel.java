@@ -950,7 +950,7 @@ public class PayrollAdminPanel extends JPanel implements Refreshable {
         JTextField field = UiKit.field(10);
         field.setText(UiKit.value(value));
         field.setEditable(false);
-        field.setBackground(new Color(248, 250, 252));
+        field.setBackground(UiKit.READONLY_BG);
         return field;
     }
 

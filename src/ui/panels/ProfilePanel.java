@@ -52,7 +52,7 @@ public class ProfilePanel extends JPanel implements Refreshable {
     private final JTextField emailField = UiKit.field(18);
     private final JTextField addressField = UiKit.field(24);
     private final JTextField salaryAccountField = UiKit.field(18);
-    private final JCheckBox adminCheck = new JCheckBox("관리자");
+    private final JCheckBox adminCheck = UiKit.checkBox("관리자");
 
     public ProfilePanel(AppSession session) {
         this.session = session;
