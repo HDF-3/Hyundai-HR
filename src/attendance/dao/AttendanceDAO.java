@@ -568,23 +568,19 @@ public class AttendanceDAO {
 
 	    int total = 0;
 
-	    String sql1 = """
-	    	    INSERT INTO attendance (
-	    	        emp_id,
-	    	        work_date,
-	    	        on_work_time,
-	    	        off_work_time,
-	    	        is_closed
-	    	    ) VALUES (?, ?, NULL, NULL, ?)
-	    	""";
+	    String sql1 = "INSERT INTO attendance ("
+	            + "emp_id, "
+	            + "work_date, "
+	            + "on_work_time, "
+	            + "off_work_time, "
+	            + "is_closed"
+	            + ") VALUES (?, ?, NULL, NULL, ?)";
 
-	    String sql2 = """
-	        INSERT INTO missing_punch (
-	            emp_id,
-	            work_date,
-	            missing_reason_id
-	        ) VALUES (?, ?, ?)
-	    """;
+	    String sql2 = "INSERT INTO missing_punch ("
+	            + "emp_id, "
+	            + "work_date, "
+	            + "missing_reason_id"
+	            + ") VALUES (?, ?, ?)";
 
 	    try {
 	        conn.setAutoCommit(false);
